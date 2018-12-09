@@ -30,9 +30,7 @@ export default {
     return {
       canvas: null,
       ctx: null,
-      mounted: false,
       textureCache: new Map(),
-      pageStart: 0,
       cursor: "",
       mouse: {
         x: 0,
@@ -41,10 +39,9 @@ export default {
         left: false,
         middle: false,
       },
-      interactions: {
-        draggingSeeker: false,
-        draggingScrollbar: false,
-      },
+      pageStart: 0,
+      draggingSeeker: false,
+      draggingScrollbar: false,
     };
   },
 
@@ -69,20 +66,16 @@ export default {
   },
 
   mounted() {
-    // Only setup the first time mounted() is called
-    // There are weird cases where mounted could be called later on
-    // (especially in development scenarios)
-    if (this.mounted) {
-      return;
-    }
-    this.mounted = true;
-
     this.canvas = this.$refs.canvas;
     this.ctx = this.canvas.getContext("2d");
     requestAnimationFrame((time) => this.draw(time));
   },
 
   methods: {
+    setPageStart(pageStart) {
+      this.pageStart = Math.max(Math.floor(pageStart), 0);
+    },
+
     /**
      * Handles mouse movements and events.
      */
@@ -106,9 +99,9 @@ export default {
         this.mouse.y = e.clientY - bounds.top;
 
         // Scrollbar movements are prioritized over seeker movements, etc.
-        if (this.interactions.draggingScrollbar) {
+        if (this.draggingScrollbar) {
           this.dragScrollbar(prevX, this.mouse.x);
-        } else if (this.interactions.draggingSeeker) {
+        } else if (this.draggingSeeker) {
           this.dragSeeker(prevX, this.mouse.x);
         }
       }
@@ -133,13 +126,16 @@ export default {
       this.song.paused = true;
     },
 
+    /**
+     * Drags the scrollbar from one coordinate (x1) to another coordinate (x2) on the screen.
+     */
     dragScrollbar(x1, x2) {
       const movement = x2 - x1;
       const percentMoved = movement / this.canvas.width;
       const newTick = this.song.exactTick + percentMoved * this.song.size;
       this.song.exactTick = newTick;
       // - 1 will start the seeker on screen by 1 noteblock
-      this.pageStart = Math.max(newTick - 1, 0);
+      this.setPageStart(newTick - 1);
       this.song.paused = true;
     },
 
@@ -199,13 +195,15 @@ export default {
         for (let t = pageStart; t < pageEnd; t++) {
           const x = (t - pageStart) * NOTE_SIZE;
 
-          // pageStart sometimes contains decimals that cannot be ignored because they are significant.
+          // pageStart sometimes contains decimals that cannot be ignored because they change where things render.
           // decimals are hopefully corrected here, but I really can't tell if it works.
           const note = layer.notes[Math.ceil(t)];
 
           if (!note) {
             continue;
           }
+
+          // debugger;
 
           // If the note has been played recently (1s), we will make it render slightly transparent to indicate it
           // was recently played.
@@ -236,18 +234,17 @@ export default {
       const x = relativeTick * NOTE_SIZE;
       this.ctx.fillStyle = "#000000";
 
-      // subtract the width from the x coordinate so the right edge of the bar is the true position
-      // TODO: change this?
-      this.ctx.fillRect(x - SEEKER_SIZE, 0, SEEKER_SIZE, this.canvas.height);
+      // subtract half the width from the x coordinate so the center of the bar is the true position
+      this.ctx.fillRect(x - SEEKER_SIZE / 2, 0, SEEKER_SIZE, this.canvas.height);
 
       // If the mouse is within an infinity tall rectangle around the seeker
       if (this.mouseIntersects(x - SEEKER_SELECT / 2, 0, SEEKER_SELECT, Infinity)) {
         // user is hovering over the seeker right now
-        this.interactions.draggingSeeker = this.mouse.left;
+        this.draggingSeeker = this.mouse.left;
         // left/right resize, looks like an error pointing left and right
         this.cursor = "ew-resize";
       } else {
-        this.interactions.draggingSeeker = false;
+        this.draggingSeeker = false;
       }
     },
 
@@ -255,16 +252,10 @@ export default {
      * Draws a scrollbar at the bottom of the canvas.
      */
     drawScrollbar() {
-      // Do not draw a scrollbar if there is nowhere to scroll to.
-      if (this.pageEnd >= this.song.size) {
-        return;
-      }
-
       const ticksOnScreen = this.pageEnd - this.pageStart;
       const percentOnScreen = ticksOnScreen / this.song.size;
       const percentToLeft = this.pageStart / this.song.size;
 
-      // Width of scrollbar must be at least 10 pixels
       const scrollbarWidth = Math.max(percentOnScreen * this.canvas.width, SCROLLBAR_MIN_WIDTH);
       const scrollbarStart = percentToLeft * this.canvas.width;
       const startY = this.canvas.height - SCROLLBAR_HEIGHT;
@@ -272,7 +263,7 @@ export default {
       const mouseIntersects = this.mouseIntersects(scrollbarStart, startY, scrollbarWidth, SCROLLBAR_HEIGHT);
 
       if (mouseIntersects) {
-        this.interactions.draggingScrollbar = this.mouse.left;
+        this.draggingScrollbar = this.mouse.left;
         if (this.mouse.left) {
           this.ctx.fillStyle = SCROLLBAR_ACTIVE_COLOR;
         } else {
@@ -282,8 +273,8 @@ export default {
         // Even if the mouse is not on the scrollbar we did not immediately stop the interaction.
         // If the user grabs the scrollbar then moves the mouse up, they still want to grab it
         // until they release their mouse.
-        if (this.interactions.draggingScrollbar && !this.mouse.left) {
-          this.interactions.draggingScrollbar = false;
+        if (this.draggingScrollbar && !this.mouse.left) {
+          this.draggingScrollbar = false;
         }
         this.ctx.fillStyle = SCROLLBAR_INACTIVE_COLOR;
       }
@@ -312,11 +303,12 @@ export default {
 
       // Go to the next screen when the song has moved passed the end of this page.
       if (this.song.exactTick > this.pageEnd) {
-        this.pageStart = Math.floor(this.pageEnd);
+        this.setPageStart(this.song.exactTick);
       }
+
       // Go back a screen when the song has moved before our screen
       if (this.song.exactTick < this.pageStart) {
-        this.pageStart = this.song.exactTick - this.visibleTicks;
+        this.setPageStart(this.song.exactTick - this.visibleTicks);
       }
 
       // Draw notes
@@ -329,7 +321,11 @@ export default {
 
       // Draw other things
       this.drawSeeker();
-      this.drawScrollbar();
+
+      // Scrollbar should only be drawn if the entire song does not fit on a single screen.
+      if (this.song.size > this.visibleTicks) {
+        this.drawScrollbar();
+      }
 
       // Apply any changes to the cursor that have happened.
       this.canvas.style.cursor = this.cursor;

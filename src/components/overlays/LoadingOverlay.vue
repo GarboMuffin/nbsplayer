@@ -5,7 +5,7 @@
 </template>
 
 <script>
-import overlayMixin from "./mixin.js";
+import overlayMixin from "./overlay.js";
 
 export default {
   mixins: [overlayMixin],

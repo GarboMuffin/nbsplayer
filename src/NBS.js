@@ -28,9 +28,25 @@ export class Song {
   }
 
   addLayer() {
-    const layer = new Layer();
+    const layer = new Layer(this);
     this.layers.push(layer);
     return layer;
+  }
+
+  deleteLayer(layer) {
+    const index = this.layers.indexOf(layer);
+    this.layers.splice(index, 1);
+  }
+
+  play() {
+    if (this.currentTime >= this.totalTime) {
+      this.currentTime = 0;
+    }
+    this.paused = false;
+  }
+
+  pause() {
+    this.paused = true;
   }
 
   get currentTick() {
@@ -56,11 +72,16 @@ export class Song {
  * Represents a layer in a song
  */
 export class Layer {
-  constructor() {
+  constructor(song) {
+    this.song = song;
     this.name = "";
     this.volume = 1;
     this.notes = [];
     this.id = Layer.lastId++;
+  }
+
+  delete() {
+    this.song.deleteLayer(this);
   }
 
   get placeholder() {
@@ -123,6 +144,7 @@ export class Instrument {
  * Builtin instruments
  */
 Instrument.builtin = [
+  // Vue will set the correct sources and sometimes inline images using require()
   new Instrument(
     "Piano/Harp",
     require("./assets/instruments/harp.ogg"),
@@ -132,54 +154,57 @@ Instrument.builtin = [
     "Double Bass",
     require("./assets/instruments/dbass.ogg"),
     require("./assets/instruments/dbass.png")
-  ), // 1
+  ),
   new Instrument(
     "Bass Drum",
     require("./assets/instruments/bdrum.ogg"),
     require("./assets/instruments/bdrum.png")
-  ), // 2
+  ),
   new Instrument(
     "Snare Drum",
     require("./assets/instruments/sdrum.ogg"),
     require("./assets/instruments/sdrum.png")
-  ), // 3
+  ),
   new Instrument(
     "Click",
     require("./assets/instruments/click.ogg"),
     require("./assets/instruments/click.png")
-  ), // 4
+  ),
   new Instrument(
     "Guitar",
     require("./assets/instruments/guitar.ogg"),
     require("./assets/instruments/guitar.png")
-  ), // 5
+  ),
   new Instrument(
     "Flute",
     require("./assets/instruments/flute.ogg"),
     require("./assets/instruments/flute.png")
-  ), // 6
+  ),
   new Instrument(
     "Bell",
     require("./assets/instruments/bell.ogg"),
     require("./assets/instruments/bell.png")
-  ), // 7
+  ),
   new Instrument(
     "Chime",
     require("./assets/instruments/chime.ogg"),
     require("./assets/instruments/chime.png")
-  ), // 8
+  ),
   new Instrument(
     "Xylophone",
     require("./assets/instruments/xylobone.ogg"),
     require("./assets/instruments/xylophone.png")
-  ), // 9
+  ),
 ];
 
 /**
- * Parses a Song object from a .nbs file as an arrayBuffer
+ * Parses an array buffer containg the bytes of a .nbs file as a Song.
  */
 Song.fromArrayBuffer = function songFromArrayBuffer(arrayBuffer) {
   // https://www.stuffbydavid.com/mcnbs/format
+
+  // Create the song object right away. We'll be using it a lot.
+  const song = new Song();
 
   let currentByte = 0;
   const viewer = new DataView(arrayBuffer);
@@ -260,7 +285,7 @@ Song.fromArrayBuffer = function songFromArrayBuffer(arrayBuffer) {
   // Layers
   const layers = [];
   for (let i = 0; i < totalLayers; i++) {
-    const layer = new Layer();
+    const layer = new Layer(song);
     layer.name = readString();
     layer.volume = readByte() / 100;
     layers.push(layer);
@@ -271,16 +296,18 @@ Song.fromArrayBuffer = function songFromArrayBuffer(arrayBuffer) {
   // Parsing is now done.
 
   // Create the song
-  const song = new Song();
   song.author = songAuthor;
   song.name = songName;
   song.originalAuthor = originalSongAuthor;
   song.description = songDescription;
   song.layers = layers;
+  // TODO: can be simplified
   song.tempo = 20 / (tempo / 100) * 50;
-  song.paused = false;
+  song.paused = true;
 
   // Process notes
+  // Cannot be done while parsing because information about layers does not exist yet.
+  // TODO: actually it could happen during parsing
   for (const rn of rawNotes) {
     const note = new Note();
     note.key = rn.key;

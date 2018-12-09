@@ -5,38 +5,32 @@
     <loading-overlay :visible="loading"></loading-overlay>
     <welcome-overlay :visible="showWelcome"></welcome-overlay>
 
-    <!-- Editor Layout -->
-    <table id="main" class="compact">
-      <tr id="toolbar-container">
-        <td colspan="2">
-          <button @click="song.paused = !song.paused">{{ song.paused ? "PLAY" : "PAUSE"}}</button>
-        </td>
-      </tr>
+    <div class="flex flex-column">
+      <div>
+        <tool-bar :song="song" :options="options"></tool-bar>
+      </div>
+      <div>
+        <div class="flex flex-row" id="middle">
+          <div id="layer-list" class="flex flex-column">
+            <time-box :song="song"></time-box>
+            <layer-meta :layer="layer" :key="layer.id" v-for="layer in song.layers"></layer-meta>
+            <!-- parenthesis after addLayer are required due to classes being weird about `this` -->
+            <button @click="song.addLayer()" class="row">+ layer</button>
+          </div>
 
-      <tr valign="top" id="middle">
-
-        <td id="layer-list">
-          <time-box :song="song"></time-box>
-          <layer-meta :layer="layer" :key="layer.id" v-for="layer in song.layers"></layer-meta>
-          <!-- parenthesis after addLayer are required due to classes being weird about `this` -->
-          <button @click="song.addLayer()" class="row">+ layer</button>
-        </td>
-
-        <td id="canvas-container">
           <note-canvas :song="song"></note-canvas>
-        </td>
+        </div>
+      </div>
 
-      </tr>
-    </table>
-
-    <br>
-    <br>
-
-    <!-- TODO: move these options elsewhere -->
-    <div><label>Volume <input type="range" v-model.number="options.volume" min="0" max="1" step="0.01"> {{ options.volume * 100 }}%</label></div>
-    <div><label>Loop <input type="checkbox" v-model="options.loop"></label></div>
-    <div><label>Key Offset <input type="number" v-model.number="options.keyOffset"></label></div>
-    <div><label>Tempo <input type="number" v-model.number="song.tempo" step="any"> ms per tick</label></div>
+      <div>
+        <!-- TODO: move these options elsewhere -->
+        <div><label>Volume <input type="range" v-model.number="options.volume" min="0" max="1" step="0.01"> {{ options.volume * 100 }}%</label></div>
+        <div><label>Loop <input type="checkbox" v-model="options.loop"></label></div>
+        <div><label>Key Offset <input type="number" v-model.number="options.keyOffset"></label></div>
+        <div><label>Tempo <input type="number" v-model.number="song.tempo" step="any"> ms per tick</label></div>
+        <i>these options will be moving elsewhere soon</i>
+      </div>
+    </div>
 
   </div>
 </template>
@@ -49,6 +43,7 @@ import LayerMeta from "./components/LayerMeta.vue";
 import TimeBox from "./components/TimeBox.vue";
 import LoadingOverlay from "./components/overlays/LoadingOverlay.vue";
 import WelcomeOverlay from "./components/overlays/WelcomeOverlay.vue";
+import Toolbar from "./components/toolbar/Toolbar.vue";
 
 export default {
   components: {
@@ -57,6 +52,7 @@ export default {
     LoadingOverlay,
     WelcomeOverlay,
     TimeBox,
+    "tool-bar": Toolbar,
   },
 
   data() {
@@ -88,6 +84,9 @@ export default {
     for (var i = 0; i < 5; i++) {
       this.song.addLayer();
     }
+
+    // for debugging, expose the app
+    window.app = this;
   },
 
   watch: {
@@ -158,7 +157,7 @@ export default {
         if (this.options.loop) {
           this.song.currentTime = 0;
         } else {
-          this.song.paused = false;
+          this.song.paused = true;
         }
         return;
       }
@@ -188,9 +187,16 @@ body {
   font-family: sans-serif;
   margin: 0;
 }
-
 code {
   font-family: "Consolas", "Courier New", Courier, monospace;
+}
+
+/* Make links look more like links by default */
+a {
+  cursor: pointer;
+}
+a:hover {
+  text-decoration: underline;
 }
 
 table.compact,
@@ -201,20 +207,42 @@ table.compact td {
   border-collapse: collapse;
 }
 
+/* Hide spinners on some numer inputs */
+.no-spinners {
+  -moz-appearance: textfield;
+}
+.no-spinners::-webkit-outer-spin-button,
+.no-spinners::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Flex Styles */
+.flex {
+  display: flex;
+}
+.flex-row {
+  flex-direction: row;
+}
+.flex-column {
+  flex-direction: column;
+}
+
+/* Overlays */
 .overlay {
   /* always centered */
   position: fixed;
   top: 50%;
   left: 50%;
-  text-align: center;
   transform: translate(-50%, -50%);
   /* make it look half decent */
   background-color: #ededed;
   border-left: 1px solid #e4e4e4;
   border-top: 1px solid #e4e4e4;
   border-radius: 7px;
-  padding: 10px 85px;
+  padding: 15px 30px;
   box-shadow: 3px 3px #111;
+  /* visibility is handled by js */
 }
 
 #layer-list {
@@ -224,13 +252,6 @@ table.compact td {
 #layer-list > .row {
   height: 32px;
   width: 200px;
-}
-#canvas-container {
-  width: 100%;
-  height: 100%;
-}
-#toolbar-container {
-  height: 20px;
 }
 #middle {
   border-top: 1px solid #777;
