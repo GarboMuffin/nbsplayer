@@ -4,6 +4,9 @@ node_js:
 script:
   - npm run build
 cache: npm
+branches:
+  only:
+  - master
 deploy:
   provider: pages
   skip-cleanup: true
