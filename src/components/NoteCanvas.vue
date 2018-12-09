@@ -1,0 +1,348 @@
+<template>
+  <canvas
+    ref="canvas"
+    @mousedown.prevent="handleMouse"
+    @mouseup.prevent="handleMouse"
+    @mousemove="handleMouse"
+  ></canvas>
+</template>
+
+<script>
+const ROW_HEIGHT = 32;
+const NOTE_SIZE = 32;
+
+const SEEKER_SIZE = 2;
+const SEEKER_SELECT = SEEKER_SIZE * 2;
+
+const SCROLLBAR_HEIGHT = 16;
+const SCROLLBAR_MIN_WIDTH = 10;
+const SCROLLBAR_INACTIVE_COLOR = "#777";
+const SCROLLBAR_ACTIVE_COLOR = "#555";
+const SCROLLBAR_HOVER_COLOR = "#666";
+
+const KEY_TEXT = [
+  "A-", "A#", "B-", "C-", "C#", "D-", "D#", "E-", "F-", "F#", "G-", "G#",
+];
+
+export default {
+  props: ["song"],
+  data() {
+    return {
+      canvas: null,
+      ctx: null,
+      mounted: false,
+      textureCache: new Map(),
+      pageStart: 0,
+      cursor: "",
+      mouse: {
+        x: 0,
+        y: 0,
+        right: false,
+        left: false,
+        middle: false,
+      },
+      interactions: {
+        draggingSeeker: false,
+        draggingScrollbar: false,
+      },
+    };
+  },
+
+  computed: {
+    // Caching pageEnd causes various issues with the page's end not updating until it is reached
+    // (even if the real end has moved)
+    pageEnd: {
+      cache: false,
+      get() {
+        return this.pageStart + this.canvas.width / NOTE_SIZE;
+      }
+    },
+    // TODO: does caching these cause issues?
+    // TODO: maybe these shouldn't be computed properties?
+    visibleTicks() {
+      return Math.ceil(this.canvas.width / NOTE_SIZE);
+    },
+    visibleLayers() {
+      const maxVisibleLayers = Math.ceil(this.canvas.height / ROW_HEIGHT);
+      return Math.min(this.song.layers.length, maxVisibleLayers);
+    },
+  },
+
+  mounted() {
+    // Only setup the first time mounted() is called
+    // There are weird cases where mounted could be called later on
+    // (especially in development scenarios)
+    if (this.mounted) {
+      return;
+    }
+    this.mounted = true;
+
+    this.canvas = this.$refs.canvas;
+    this.ctx = this.canvas.getContext("2d");
+    requestAnimationFrame((time) => this.draw(time));
+  },
+
+  methods: {
+    /**
+     * Handles mouse movements and events.
+     */
+    handleMouse(e) {
+      if (e.type === "mouseup" || e.type === "mousedown") {
+        const isDown = e.type === "mousedown";
+        if (e.button === 0) {
+          this.mouse.left = isDown;
+        } else if (e.button === 1) {
+          this.mouse.middle = isDown;
+        } else if (e.button === 2) {
+          this.mouse.right = isDown;
+        }
+      } else if (e.type === "mousemove") {
+        const prevX = this.mouse.x;
+        const prevY = this.mouse.y;
+
+        // TODO: cache bounds and only calculate once?
+        const bounds = this.canvas.getBoundingClientRect();
+        this.mouse.x = e.clientX - bounds.left;
+        this.mouse.y = e.clientY - bounds.top;
+
+        // Scrollbar movements are prioritized over seeker movements, etc.
+        if (this.interactions.draggingScrollbar) {
+          this.dragScrollbar(prevX, this.mouse.x);
+        } else if (this.interactions.draggingSeeker) {
+          this.dragSeeker(prevX, this.mouse.x);
+        }
+      }
+    },
+
+    /**
+     * Determines if the mouse intersects a rectangle with a given x coordinate, y coordinate, width, and height.
+     */
+    mouseIntersects(x, y, w, h) {
+      const mx = this.mouse.x;
+      const my = this.mouse.y;
+      return mx >= x && mx <= x + w && my >= y && my <= y + h;
+    },
+
+    /**
+     * Drags the seeker from one coordinate (x1) to another coordinate (x2) on the screen.
+     */
+    dragSeeker(x1, x2) {
+      const movement = x2 - x1;
+      const ticksMoved = movement / NOTE_SIZE;
+      this.song.exactTick += ticksMoved;
+      this.song.paused = true;
+    },
+
+    dragScrollbar(x1, x2) {
+      const movement = x2 - x1;
+      const percentMoved = movement / this.canvas.width;
+      const newTick = this.song.exactTick + percentMoved * this.song.size;
+      this.song.exactTick = newTick;
+      // - 1 will start the seeker on screen by 1 noteblock
+      this.pageStart = Math.max(newTick - 1, 0);
+      this.song.paused = true;
+    },
+
+    /**
+     * Gets the texture for a noteblock with a given instrument and key.
+     * Results of this method are cached to speed up later invokations.
+     */
+    getNoteTexture(instrument, key) {
+      // Textures are rendered once and cached forever.
+      // Creating the previews takes a lot of time (drawing the image and the text is much slower than just an image)
+      // so the hard part is done once and never again.
+
+      // A hopefully unique key for this texture. Textures only depend on the instrument and key, so this should work.
+      const mapKey = `${instrument.name}-${key}`;
+      if (this.textureCache[mapKey]) {
+        return this.textureCache[mapKey];
+      }
+
+      const canvas = document.createElement("canvas");
+      canvas.width = NOTE_SIZE;
+      canvas.height = NOTE_SIZE;
+
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, NOTE_SIZE, NOTE_SIZE);
+      ctx.drawImage(instrument.baseTexture, 0, 0);
+
+      // Draw the key text centered
+      ctx.fillStyle = "white";
+      ctx.font = "12px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      const text = KEY_TEXT[key % 12] + (Math.floor(key / 12) + 1).toString();
+      ctx.fillText(text, NOTE_SIZE / 2, NOTE_SIZE / 2);
+
+      // and ofcourse actually cache all this work
+      this.textureCache[mapKey] = canvas;
+      return canvas;
+    },
+
+    /**
+     * Draws all notes that are currently visible.
+     * Draws notes starting at (0, 0), translate() the canvas if this is not intended.
+     */
+    drawNotes(time) {
+      // Determine what we need to draw.
+      const visibleTicks = this.visibleTicks;
+      const visibleLayers = this.visibleLayers;
+      const pageStart = this.pageStart;
+      const pageEnd = this.pageEnd;
+
+      // The note rendering loop loops through all the layers, and then through each note we need to draw.
+      // `for (... of ...)` loops are not used because the index is required for coordinate calculations.
+      for (let l = 0; l < visibleLayers; l++) {
+        const layer = this.song.layers[l];
+        const y = l * ROW_HEIGHT;
+
+        for (let t = pageStart; t < pageEnd; t++) {
+          const x = (t - pageStart) * NOTE_SIZE;
+
+          // pageStart sometimes contains decimals that cannot be ignored because they are significant.
+          // decimals are hopefully corrected here, but I really can't tell if it works.
+          const note = layer.notes[Math.ceil(t)];
+
+          if (!note) {
+            continue;
+          }
+
+          // If the note has been played recently (1s), we will make it render slightly transparent to indicate it
+          // was recently played.
+          const timeSincePlayed = note.lastPlayed === null ? Infinity : time - note.lastPlayed;
+          if (timeSincePlayed < 1000) {
+            // Opacity between 1 (played exactly 1s ago) and 0.5 (played exactly 0s ago)
+            this.ctx.globalAlpha = 1 - (1000 - timeSincePlayed) / 2000;
+          }
+
+          const texture = this.getNoteTexture(note.instrument, note.key);
+          this.ctx.drawImage(texture, x, y);
+
+          // If we mucked with the opacity, remeber to cleanup after ourselves.
+          if (timeSincePlayed < 1000) {
+            this.ctx.globalAlpha = 1;
+          }
+        }
+      }
+    },
+
+    /**
+     * Draws the "seeker", the bar that shows the current time.
+     * It can be dragged to "seek" around the song.
+     */
+    drawSeeker() {
+      // the current tick, relative to the displayed page.
+      const relativeTick = this.song.exactTick - this.pageStart;
+      const x = relativeTick * NOTE_SIZE;
+      this.ctx.fillStyle = "#000000";
+
+      // subtract the width from the x coordinate so the right edge of the bar is the true position
+      // TODO: change this?
+      this.ctx.fillRect(x - SEEKER_SIZE, 0, SEEKER_SIZE, this.canvas.height);
+
+      // If the mouse is within an infinity tall rectangle around the seeker
+      if (this.mouseIntersects(x - SEEKER_SELECT / 2, 0, SEEKER_SELECT, Infinity)) {
+        // user is hovering over the seeker right now
+        this.interactions.draggingSeeker = this.mouse.left;
+        // left/right resize, looks like an error pointing left and right
+        this.cursor = "ew-resize";
+      } else {
+        this.interactions.draggingSeeker = false;
+      }
+    },
+
+    /**
+     * Draws a scrollbar at the bottom of the canvas.
+     */
+    drawScrollbar() {
+      // Do not draw a scrollbar if there is nowhere to scroll to.
+      if (this.pageEnd >= this.song.size) {
+        return;
+      }
+
+      const ticksOnScreen = this.pageEnd - this.pageStart;
+      const percentOnScreen = ticksOnScreen / this.song.size;
+      const percentToLeft = this.pageStart / this.song.size;
+
+      // Width of scrollbar must be at least 10 pixels
+      const scrollbarWidth = Math.max(percentOnScreen * this.canvas.width, SCROLLBAR_MIN_WIDTH);
+      const scrollbarStart = percentToLeft * this.canvas.width;
+      const startY = this.canvas.height - SCROLLBAR_HEIGHT;
+
+      const mouseIntersects = this.mouseIntersects(scrollbarStart, startY, scrollbarWidth, SCROLLBAR_HEIGHT);
+
+      if (mouseIntersects) {
+        this.interactions.draggingScrollbar = this.mouse.left;
+        if (this.mouse.left) {
+          this.ctx.fillStyle = SCROLLBAR_ACTIVE_COLOR;
+        } else {
+          this.ctx.fillStyle = SCROLLBAR_HOVER_COLOR;
+        }
+      } else {
+        // Even if the mouse is not on the scrollbar we did not immediately stop the interaction.
+        // If the user grabs the scrollbar then moves the mouse up, they still want to grab it
+        // until they release their mouse.
+        if (this.interactions.draggingScrollbar && !this.mouse.left) {
+          this.interactions.draggingScrollbar = false;
+        }
+        this.ctx.fillStyle = SCROLLBAR_INACTIVE_COLOR;
+      }
+
+      // The main shape.
+      this.ctx.fillRect(scrollbarStart, startY, scrollbarWidth, SCROLLBAR_HEIGHT);
+    },
+
+    /**
+     * Draws the canvas.
+     */
+    draw(time) {
+      requestAnimationFrame((time) => this.draw(time));
+
+      // 1 row for each layer + 2 for rows for top and bottom
+      const rows = this.song.layers.length + 2;
+
+      this.canvas.height = rows * ROW_HEIGHT;
+      // Width can change. Set it to the displayed width so nothing gets distorted.
+      this.canvas.width = parseInt(window.getComputedStyle(this.canvas).width);
+
+      // Reset canvas
+      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      // Cursor will change later
+      this.cursor = "";
+
+      // Go to the next screen when the song has moved passed the end of this page.
+      if (this.song.exactTick > this.pageEnd) {
+        this.pageStart = Math.floor(this.pageEnd);
+      }
+      // Go back a screen when the song has moved before our screen
+      if (this.song.exactTick < this.pageStart) {
+        this.pageStart = this.song.exactTick - this.visibleTicks;
+      }
+
+      // Draw notes
+      // Use translate() to shift the coordinate grid a bit during rendering.
+      // Simplified drawNotes() since it can assume (0, 0) is where it should start working from.
+      this.ctx.save();
+      this.ctx.translate(0, ROW_HEIGHT); // shifts coordinate grid up 1 row
+      this.drawNotes(time);
+      this.ctx.restore();
+
+      // Draw other things
+      this.drawSeeker();
+      this.drawScrollbar();
+
+      // Apply any changes to the cursor that have happened.
+      this.canvas.style.cursor = this.cursor;
+    },
+  },
+}
+</script>
+
+<style scoped>
+canvas {
+  width: 100%;
+  height: 100%;
+  /* a 1x64 repeating background image that matches the colors used in the layer list */
+  background-image: url("../assets/canvasbackground.jpg");
+}
+</style>
