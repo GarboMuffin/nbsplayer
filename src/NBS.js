@@ -1,5 +1,12 @@
 import { audioContext } from "./audio.js";
 
+/**
+ * JavaScript implementation of .nbs files.
+ */
+
+/**
+ * Represents a song.
+ */
 export class Song {
   constructor() {
     this.name = "";
@@ -45,6 +52,9 @@ export class Song {
   }
 }
 
+/**
+ * Represents a layer in a song
+ */
 export class Layer {
   constructor() {
     this.name = "";
@@ -59,6 +69,9 @@ export class Layer {
 }
 Layer.lastId = 0;
 
+/**
+ * Represents a note in a song
+ */
 export class Note {
   constructor() {
     this.key = 45;
@@ -67,6 +80,9 @@ export class Note {
   }
 }
 
+/**
+ * Represents an instrument
+ */
 export class Instrument {
   constructor(name, audioSrc, textureSrc) {
     this.name = name;
@@ -103,6 +119,9 @@ export class Instrument {
   }
 }
 
+/**
+ * Builtin instruments
+ */
 Instrument.builtin = [
   new Instrument(
     "Piano/Harp",
@@ -156,8 +175,10 @@ Instrument.builtin = [
   ), // 9
 ];
 
+/**
+ * Parses a Song object from a .nbs file as an arrayBuffer
+ */
 Song.fromArrayBuffer = function songFromArrayBuffer(arrayBuffer) {
-  // JavaScript .nbs parser.
   // https://www.stuffbydavid.com/mcnbs/format
 
   let currentByte = 0;
@@ -249,11 +270,13 @@ Song.fromArrayBuffer = function songFromArrayBuffer(arrayBuffer) {
 
   // Parsing is now done.
 
-  // Set fields
+  // Create the song
   const song = new Song();
-  song.layers = layers;
   song.author = songAuthor;
   song.name = songName;
+  song.originalAuthor = originalSongAuthor;
+  song.description = songDescription;
+  song.layers = layers;
   song.tempo = 20 / (tempo / 100) * 50;
   song.paused = false;
 

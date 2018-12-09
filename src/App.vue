@@ -10,7 +10,6 @@
       <tr id="toolbar-container">
         <td colspan="2">
           <button @click="song.paused = !song.paused">{{ song.paused ? "PLAY" : "PAUSE"}}</button>
-          <button @click="showWelcome = true">GO BACK</button>
         </td>
       </tr>
 
@@ -34,7 +33,7 @@
     <br>
 
     <!-- TODO: move these options elsewhere -->
-    <div><label>Volume <input type="range" v-model.number="options.volume" min="0" max="1" step="0.01"> {{ options.volume * 100 + "%" }}</label></div>
+    <div><label>Volume <input type="range" v-model.number="options.volume" min="0" max="1" step="0.01"> {{ options.volume * 100 }}%</label></div>
     <div><label>Loop <input type="checkbox" v-model="options.loop"></label></div>
     <div><label>Key Offset <input type="number" v-model.number="options.keyOffset"></label></div>
     <div><label>Tempo <input type="number" v-model.number="song.tempo" step="any"> ms per tick</label></div>
