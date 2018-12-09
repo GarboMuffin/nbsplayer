@@ -138,7 +138,8 @@ export default {
       const percentMoved = movement / this.canvas.width;
       const newTick = this.song.exactTick + percentMoved * this.song.size;
       this.song.exactTick = newTick;
-      this.pageStart = newTick;
+      // - 1 will start the seeker on screen by 1 noteblock
+      this.pageStart = Math.max(newTick - 1, 0);
       this.song.paused = true;
     },
 
@@ -197,9 +198,10 @@ export default {
 
         for (let t = pageStart; t < pageEnd; t++) {
           const x = (t - pageStart) * NOTE_SIZE;
-          // floor to remove decimals from pageStart that snuck around
-          // cannot just remove pageStart decimals, they change where things should be rendered.
-          const note = layer.notes[Math.floor(t)];
+
+          // pageStart sometimes contains decimals that cannot be ignored because they are significant.
+          // decimals are hopefully corrected here, but I really can't tell if it works.
+          const note = layer.notes[Math.ceil(t)];
 
           if (!note) {
             continue;
@@ -213,7 +215,8 @@ export default {
             this.ctx.globalAlpha = 1 - (1000 - timeSincePlayed) / 2000;
           }
 
-          this.ctx.drawImage(this.getNoteTexture(note.instrument, note.key), x, y);
+          const texture = this.getNoteTexture(note.instrument, note.key);
+          this.ctx.drawImage(texture, x, y);
 
           // If we mucked with the opacity, remeber to cleanup after ourselves.
           if (timeSincePlayed < 1000) {
@@ -285,6 +288,7 @@ export default {
         this.ctx.fillStyle = SCROLLBAR_INACTIVE_COLOR;
       }
 
+      // The main shape.
       this.ctx.fillRect(scrollbarStart, startY, scrollbarWidth, SCROLLBAR_HEIGHT);
     },
 
@@ -307,8 +311,12 @@ export default {
       this.cursor = "";
 
       // Go to the next screen when the song has moved passed the end of this page.
-      if (this.song.exactTick >= this.pageEnd) {
+      if (this.song.exactTick > this.pageEnd) {
         this.pageStart = Math.floor(this.pageEnd);
+      }
+      // Go back a screen when the song has moved before our screen
+      if (this.song.exactTick < this.pageStart) {
+        this.pageStart = this.song.exactTick - this.visibleTicks;
       }
 
       // Draw notes
