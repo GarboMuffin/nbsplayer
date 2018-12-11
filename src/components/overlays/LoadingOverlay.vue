@@ -9,8 +9,5 @@ import overlayMixin from "./overlay.js";
 
 export default {
   mixins: [overlayMixin],
-  created() {
-
-  },
 };
 </script>

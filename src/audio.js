@@ -1,3 +1,4 @@
+// Yell at the user if the browser does not support audiocontext
 if (!window.AudioContext) {
   alert("Browser not supported. (does not support AudioContext)");
 }
@@ -9,7 +10,7 @@ export const audioContext = new AudioContext();
 
 /**
  * The destination for all audio nodes in the app.
- * Do not use audioContext.destination.
+ * Use instead of audioContext.destination.
  */
 export const audioDestination = audioContext.createGain();
 

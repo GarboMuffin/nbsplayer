@@ -1,9 +1,8 @@
 # nbsplayer
 
-It's like [Note Block Studio](https://www.stuffbydavid.com/mcnbs), but a website.
+[Minecraft Note Block Studio](https://www.stuffbydavid.com/mcnbs) as a website.
 
-This is still in a very early stage. Not much time has been put into making it look nice.
-That being said, it is perfectly functional at playing songs.
+Still in a very early stage. Editing (and saving) are not yet supported, but are likely to be added soon.
 
 ## Project Setup
 ```

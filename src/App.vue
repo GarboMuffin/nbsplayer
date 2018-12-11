@@ -3,11 +3,13 @@
     <!-- Overlays -->
 
     <loading-overlay :visible="loading"></loading-overlay>
-    <welcome-overlay :visible="showWelcome"></welcome-overlay>
+    <welcome-overlay ref="welcomeOverlay" :visible="showWelcome"></welcome-overlay>
+    <song-details-overlay ref="songDetailsOverlay" :song="song"></song-details-overlay>
+    <settings-overlay ref="settingsOverlay" :options="options" :song="song"></settings-overlay>
 
     <div class="flex flex-column">
       <div>
-        <tool-bar :song="song" :options="options"></tool-bar>
+        <toolbar :song="song" :options="options"></toolbar>
       </div>
       <div>
         <div class="flex flex-row" id="middle">
@@ -18,17 +20,8 @@
             <button @click="song.addLayer()" class="row">+ layer</button>
           </div>
 
-          <note-canvas :song="song"></note-canvas>
+          <note-canvas :song="song" ref="canvas"></note-canvas>
         </div>
-      </div>
-
-      <div>
-        <!-- TODO: move these options elsewhere -->
-        <div><label>Volume <input type="range" v-model.number="options.volume" min="0" max="1" step="0.01"> {{ options.volume * 100 }}%</label></div>
-        <div><label>Loop <input type="checkbox" v-model="options.loop"></label></div>
-        <div><label>Key Offset <input type="number" v-model.number="options.keyOffset"></label></div>
-        <div><label>Tempo <input type="number" v-model.number="song.tempo" step="any"> ms per tick</label></div>
-        <i>these options will be moving elsewhere soon</i>
       </div>
     </div>
 
@@ -43,6 +36,8 @@ import LayerMeta from "./components/LayerMeta.vue";
 import TimeBox from "./components/TimeBox.vue";
 import LoadingOverlay from "./components/overlays/LoadingOverlay.vue";
 import WelcomeOverlay from "./components/overlays/WelcomeOverlay.vue";
+import SettingsOverlay from "./components/overlays/SettingsOverlay.vue";
+import SongDetailsOverlay from "./components/overlays/SongDetailsOverlay.vue";
 import Toolbar from "./components/toolbar/Toolbar.vue";
 
 export default {
@@ -51,8 +46,10 @@ export default {
     LayerMeta,
     LoadingOverlay,
     WelcomeOverlay,
+    SettingsOverlay,
+    SongDetailsOverlay,
     TimeBox,
-    "tool-bar": Toolbar,
+    Toolbar,
   },
 
   data() {
@@ -109,6 +106,9 @@ export default {
           const song = NBS.Song.fromArrayBuffer(e.target.result);
           this.song = song;
           this.loading = false;
+          if (song.title || song.author || song.originalAuthor || song.description) {
+            this.$refs.songDetailsOverlay.show();
+          }
           resolve(song);
         };
         fileReader.onerror = (err) => reject(err);
@@ -139,15 +139,7 @@ export default {
       return source;
     },
 
-    tick(time) {
-      requestAnimationFrame((time) => this.tick(time));
-
-      // Determine the amount of time that has passed, up to 500 ms
-      // If the time is above 500 ms then most likely the timer stopped for a bit (tabbed out, or something)
-      // and skipping ahead 30 seconds if the user has been gone 30 seconds is bad design.
-      const timePassed = Math.min(time - this.previousTime, 500);
-      this.previousTime = time;
-
+    advanceSong(time, timePassed) {
       if (this.song.paused) {
         return;
       }
@@ -177,6 +169,22 @@ export default {
           note.lastPlayed = time;
         }
       }
+    },
+
+    tick(time) {
+      requestAnimationFrame((time) => this.tick(time));
+
+      // Determine the amount of time that has passed, up to 500 ms
+      // If the time is above 500 ms then most likely the timer stopped for a bit (tabbed out, or something)
+      // and skipping ahead 30 seconds if the user has been gone 30 seconds is bad design.
+      const timePassed = Math.min(time - this.previousTime, 500);
+      this.previousTime = time;
+
+      // Advance the song forward.
+      this.advanceSong(time, timePassed);
+
+      // Draw the canvas after updating the song.
+      this.$refs.canvas.draw(time);
     },
   }
 }
@@ -226,6 +234,9 @@ table.compact td {
 }
 .flex-column {
   flex-direction: column;
+}
+.flex-center {
+  align-items: center;
 }
 
 /* Overlays */

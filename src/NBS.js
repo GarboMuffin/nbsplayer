@@ -148,7 +148,7 @@ Instrument.builtin = [
   new Instrument(
     "Piano/Harp",
     require("./assets/instruments/harp.ogg"),
-    require("./assets/instruments/harp.png"),
+    require("./assets/instruments/harp.png")
   ),
   new Instrument(
     "Double Bass",

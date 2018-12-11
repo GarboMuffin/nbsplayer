@@ -68,7 +68,6 @@ export default {
   mounted() {
     this.canvas = this.$refs.canvas;
     this.ctx = this.canvas.getContext("2d");
-    requestAnimationFrame((time) => this.draw(time));
   },
 
   methods: {
@@ -287,8 +286,6 @@ export default {
      * Draws the canvas.
      */
     draw(time) {
-      requestAnimationFrame((time) => this.draw(time));
-
       // 1 row for each layer + 2 for rows for top and bottom
       const rows = this.song.layers.length + 2;
 

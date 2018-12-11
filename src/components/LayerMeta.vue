@@ -1,7 +1,7 @@
 <template>
   <div class="row layer">
     <input type="text" v-model="layer.name" :placeholder="layer.placeholder" name="name">
-    <input type="number" v-model="layer.volume" name="volume" class="no-spinners">
+    <input type="number" v-model="layer.volume" name="volume" class="no-spinners" step="any">
 
     <!-- Janky ['delete'] allows it to call delete without using the word delete -->
     <!-- because vue errors if I do that -->
