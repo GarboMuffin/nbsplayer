@@ -5,16 +5,18 @@
       <small>Note Block Studio as a website. Beta.</small>
     </div>
     <div class="actions section">
-      <div @click="openFileInput" class="load-song button flex flex-row flex-center">
+      <div class="load-song button flex flex-row flex-center">
         <font-awesome-icon icon="folder-open" fixed-width size="2x"></font-awesome-icon>
-        <div class="flex flex-column button-body">
-          <div>Load a song</div>
-          <input ref="fileInput" type="file" accept=".nbs" @input="loadFile">
-        </div>
+        <div class="button-body">Load a song</div>
+        <input class="file-input" type="file" accept=".nbs" @change="loadFile">
+      </div>
+      <div class="new-song button flex flex-row flex-center" @click="newSong">
+        <font-awesome-icon icon="file" fixed-width size="2x"></font-awesome-icon>
+        <div class="button-body">Create a new song</div>
       </div>
       <div class="new-song button flex flex-row flex-center" @click="hide">
-        <font-awesome-icon icon="file" fixed-width size="2x"></font-awesome-icon>
-        <div class="flex flex-column button-body">Create a new song</div>
+        <font-awesome-icon icon="times-circle" fixed-width size="2x"></font-awesome-icon>
+        <div class="button-body">Dismiss</div>
       </div>
     </div>
   </div>
@@ -32,8 +34,9 @@ export default {
       this.$parent.loadFile(file)
         .then(() => this.hide());
     },
-    openFileInput() {
-      this.$refs.fileInput.click();
+    newSong() {
+      this.$parent.song = new NBS.Song();
+      this.hide();
     },
   },
 };
@@ -57,7 +60,7 @@ export default {
 }
 
 .button {
-  max-width: 500px;
+  width: 250px;
   padding: 10px;
   border-radius: 5px;
   /* makes the added border not cause any size changes */
@@ -71,5 +74,17 @@ export default {
 }
 .button-body {
   padding-left: 5px;
+}
+
+.load-song {
+  position: relative;
+}
+.file-input {
+  opacity: 0;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
 }
 </style>

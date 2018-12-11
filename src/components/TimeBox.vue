@@ -1,7 +1,12 @@
 <template>
-  <div class="row timebox">
-    <div class="current">{{ currentTime }}</div>
-    <div class="end">{{ endTime }}</div>
+  <div class="flex flex-row timebox">
+    <div>
+      <div class="current">{{ currentTime }}</div>
+      <div class="end">{{ endTime }}</div>
+    </div>
+    <div class="flex flex-center">
+      <input type="number" v-model="song.tempo" class="no-spinners" name="tempo" step="any" title="Tempo in ticks/second">
+    </div>
   </div>
 </template>
 
@@ -31,10 +36,16 @@ export default {
 
 <style scoped>
 .timebox {
-  text-align: right;
   font-size: 12px;
+  justify-content: flex-end;
+}
+.timebox > * {
+  padding-right: 10px;
 }
 .current {
   font-weight: bold;
+}
+input[name="tempo"] {
+  width: 35px;
 }
 </style>

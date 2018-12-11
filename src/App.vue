@@ -5,23 +5,21 @@
     <loading-overlay :visible="loading"></loading-overlay>
     <welcome-overlay ref="welcomeOverlay" :visible="showWelcome"></welcome-overlay>
     <song-details-overlay ref="songDetailsOverlay" :song="song"></song-details-overlay>
-    <settings-overlay ref="settingsOverlay" :options="options" :song="song"></settings-overlay>
+    <settings-overlay ref="settingsOverlay" :options="options"></settings-overlay>
 
-    <div class="flex flex-column">
-      <div>
-        <toolbar :song="song" :options="options"></toolbar>
-      </div>
-      <div>
-        <div class="flex flex-row" id="middle">
-          <div id="layer-list" class="flex flex-column">
-            <time-box :song="song"></time-box>
-            <layer-meta :layer="layer" :key="layer.id" v-for="layer in song.layers"></layer-meta>
-            <!-- parenthesis after addLayer are required due to classes being weird about `this` -->
-            <button @click="song.addLayer()" class="row">+ layer</button>
-          </div>
+    <!-- Core Interface -->
+    <div id="main" class="flex flex-column">
+      <toolbar :song="song" :options="options"></toolbar>
 
-          <note-canvas :song="song" ref="canvas"></note-canvas>
+      <div class="flex flex-row" id="middle">
+        <div id="layer-list" class="flex flex-column">
+          <time-box :song="song"></time-box>
+          <layer-meta :layer="layer" :key="layer.id" v-for="layer in song.layers"></layer-meta>
+          <!-- parenthesis after addLayer are required due to classes being weird about `this` -->
+          <button @click="song.addLayer()" class="row">+ layer</button>
         </div>
+
+        <note-canvas :song="song" ref="canvas"></note-canvas>
       </div>
     </div>
 

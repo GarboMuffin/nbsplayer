@@ -8,6 +8,11 @@ import { audioContext } from "./audio.js";
  * Represents a song.
  */
 export class Song {
+
+  // TODO: think in "current tick" instead of "current time"
+  // TODO: less getter/setter nonsense
+  // TODO: actually support all the fields in a real nbs file
+
   constructor() {
     this.name = "";
     this.author = "";
@@ -16,7 +21,7 @@ export class Song {
     this.layers = [];
     this.currentTime = 0;
     this.paused = true;
-    this.tempo = 100;
+    this.tempo = 5;
     this.size = 0;
   }
 
@@ -50,21 +55,25 @@ export class Song {
   }
 
   get currentTick() {
-    return Math.floor(this.currentTime / this.tempo);
+    return Math.floor(this.currentTime / this.msPerTick);
   }
   set currentTick(tick) {
-    this.currentTime = Math.max(tick * this.tempo, 0);
+    this.currentTime = Math.max(tick * this.msPerTick, 0);
   }
 
   get exactTick() {
-    return this.currentTime / this.tempo;
+    return this.currentTime / this.msPerTick;
   }
   set exactTick(tick) {
-    this.currentTime = Math.max(tick * this.tempo, 0);
+    this.currentTime = Math.max(tick * this.msPerTick, 0);
   }
 
   get totalTime() {
-    return (this.size + 1) * this.tempo;
+    return (this.size + 1) * this.msPerTick;
+  }
+
+  get msPerTick() {
+    return 20 / this.tempo * 50;
   }
 }
 
@@ -215,6 +224,12 @@ Song.fromArrayBuffer = function songFromArrayBuffer(arrayBuffer) {
     return result;
   }
 
+  function readUnsignedByte() {
+    const result = viewer.getUint8(currentByte, true);
+    currentByte += 1;
+    return result;
+  }
+
   function readShort() {
     const result = viewer.getInt16(currentByte, true);
     currentByte += 2;
@@ -231,7 +246,7 @@ Song.fromArrayBuffer = function songFromArrayBuffer(arrayBuffer) {
     const length = readInt();
     let result = "";
     for (let i = 0; i < length; i++) {
-      const byte = readByte();
+      const byte = readUnsignedByte();
       result += String.fromCharCode(byte);
     }
     return result;
@@ -301,8 +316,8 @@ Song.fromArrayBuffer = function songFromArrayBuffer(arrayBuffer) {
   song.originalAuthor = originalSongAuthor;
   song.description = songDescription;
   song.layers = layers;
-  // TODO: can be simplified
-  song.tempo = 20 / (tempo / 100) * 50;
+  // the raw tempo is ticks per second * 100, so divide by 100 to get the real number
+  song.tempo = tempo / 100;
   song.paused = true;
 
   // Process notes
@@ -312,6 +327,12 @@ Song.fromArrayBuffer = function songFromArrayBuffer(arrayBuffer) {
     const note = new Note();
     note.key = rn.key;
     note.instrument = Instrument.builtin[rn.instrument];
+    // If a note claims to be in a layer that doesn't exist, skip it.
+    // TODO: detemrine what NBS does in the scenario and copy that
+    if (rn.layer >= layers.length) {
+      console.warn("skipping note, layer does not exist", rn);
+      continue;
+    }
     const layer = layers[rn.layer];
     const tick = rn.tick;
     song.setNote(layer, tick, note);

@@ -1,7 +1,8 @@
 <template>
   <div class="flex flex-row">
-    <a @click="openOpen" class="button" title="Open">
+    <a class="open button" title="Open">
       <img src="@/assets/toolbar/open.svg" alt="Open">
+      <input type="file" accept=".nbs" @change="loadFile">
     </a>
     <span class="separator"></span>
     <a @click="play" :value="!song.paused" class="button" title="Play">
@@ -17,13 +18,16 @@
     <a @click="options.loop = !options.loop" :value="options.loop" title="Loop" class="button">
       <img src="@/assets/toolbar/loop.svg" alt="Loop">
     </a>
+    <a @click="openInfo" title="Info" class="button">
+      <img src="@/assets/toolbar/info.svg" alt="Info">
+    </a>
+    <a @click="openSettings" title="Settings" class="button">
+      <img src="@/assets/toolbar/settings.svg" alt="Settings">
+    </a>
     <a title="Volume" class="volume button">
       <img src="@/assets/toolbar/volume.svg" alt="Volume">
       <input type="range" name="volume" v-model.number="options.volume" min="0" max="1" step="0.01">
       <span class="volume-amount">{{ formattedVolume }}%</span>
-    </a>
-    <a @click="openSettings" title="Settings" class="button">
-      <img src="@/assets/toolbar/settings.svg" alt="Settings">
     </a>
   </div>
 </template>
@@ -62,17 +66,24 @@ export default {
       this.song.currentTime = 0;
     },
     /**
-     * Opens the open menu.
-     */
-    openOpen() {
-      // TODO: actually open the open menu instead of just the welcome overlay
-      this.$parent.$refs.welcomeOverlay.show();
-    },
-    /**
      * Opens the settings menu
      */
     openSettings() {
       this.$parent.$refs.settingsOverlay.show();
+    },
+    /**
+     * Opens the song information overlay
+     */
+    openInfo() {
+      this.$parent.$refs.songDetailsOverlay.show();
+    },
+    /**
+     * Loads a file from a "change" event on a file input
+     */
+    loadFile(e) {
+      this.pause();
+      const file = e.target.files[0];
+      this.$parent.loadFile(file);
     },
   },
 }
@@ -120,5 +131,17 @@ export default {
 }
 .volume:hover :not(img) {
   display: initial;
+}
+
+.open {
+  position: relative;
+}
+.open input[type="file"] {
+  opacity: 0;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
 }
 </style>
