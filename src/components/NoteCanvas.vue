@@ -15,7 +15,7 @@ const SEEKER_SIZE = 2;
 const SEEKER_SELECT = SEEKER_SIZE * 2;
 
 const SCROLLBAR_HEIGHT = 16;
-const SCROLLBAR_MIN_WIDTH = 10;
+const SCROLLBAR_MIN_WIDTH = 12;
 const SCROLLBAR_INACTIVE_COLOR = "#777";
 const SCROLLBAR_ACTIVE_COLOR = "#555";
 const SCROLLBAR_HOVER_COLOR = "#666";
@@ -46,19 +46,21 @@ export default {
   },
 
   computed: {
-    // Caching pageEnd causes various issues with the page's end not updating until it is reached
-    // (even if the real end has moved)
     pageEnd: {
       cache: false,
       get() {
         return this.pageStart + this.canvas.width / NOTE_SIZE;
       }
     },
-    // TODO: does caching these cause issues?
-    // TODO: maybe these shouldn't be computed properties?
+    /**
+     * The amount of ticks that are visible on the canvas.
+     */
     visibleTicks() {
       return Math.ceil(this.canvas.width / NOTE_SIZE);
     },
+    /**
+     * The amount of layers that are visible on the canvas.
+     */
     visibleLayers() {
       const maxVisibleLayers = Math.ceil(this.canvas.height / ROW_HEIGHT);
       return Math.min(this.song.layers.length, maxVisibleLayers);
@@ -68,13 +70,12 @@ export default {
   mounted() {
     this.canvas = this.$refs.canvas;
     this.ctx = this.canvas.getContext("2d");
+    if (!this.ctx) {
+      alert("Failed to get a 2d canvas rendering context.");
+    }
   },
 
   methods: {
-    setPageStart(pageStart) {
-      this.pageStart = Math.max(Math.floor(pageStart), 0);
-    },
-
     /**
      * Handles mouse movements and events.
      */
@@ -121,7 +122,7 @@ export default {
     dragSeeker(x1, x2) {
       const movement = x2 - x1;
       const ticksMoved = movement / NOTE_SIZE;
-      this.song.exactTick += ticksMoved;
+      this.song.currentTick += ticksMoved;
       this.song.paused = true;
     },
 
@@ -131,96 +132,12 @@ export default {
     dragScrollbar(x1, x2) {
       const movement = x2 - x1;
       const percentMoved = movement / this.canvas.width;
-      const newTick = this.song.exactTick + percentMoved * this.song.size;
-      this.song.exactTick = newTick;
-      // - 1 will start the seeker on screen by 1 noteblock
-      this.setPageStart(newTick - 1);
+      const ticksMoved = percentMoved * this.song.size;
+      const newTick = this.song.currentTick + ticksMoved;
+      this.song.currentTick = newTick;
+      // pageStart cannot have decimals, and start the page 1 before the new current tick.
+      this.pageStart = Math.floor(newTick) - 1;
       this.song.paused = true;
-    },
-
-    /**
-     * Gets the texture for a noteblock with a given instrument and key.
-     * Results of this method are cached to speed up later invokations.
-     */
-    getNoteTexture(instrument, key) {
-      // Textures are rendered once and cached forever.
-      // Creating the previews takes a lot of time (drawing the image and the text is much slower than just an image)
-      // so the hard part is done once and never again.
-
-      // A hopefully unique key for this texture. Textures only depend on the instrument and key, so this should work.
-      const mapKey = `${instrument.name}-${key}`;
-      if (this.textureCache[mapKey]) {
-        return this.textureCache[mapKey];
-      }
-
-      const canvas = document.createElement("canvas");
-      canvas.width = NOTE_SIZE;
-      canvas.height = NOTE_SIZE;
-
-      const ctx = canvas.getContext("2d");
-      ctx.clearRect(0, 0, NOTE_SIZE, NOTE_SIZE);
-      ctx.drawImage(instrument.baseTexture, 0, 0);
-
-      // Draw the key text centered
-      ctx.fillStyle = "white";
-      ctx.font = "12px sans-serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      const text = KEY_TEXT[key % 12] + (Math.floor(key / 12) + 1).toString();
-      ctx.fillText(text, NOTE_SIZE / 2, NOTE_SIZE / 2);
-
-      // and ofcourse actually cache all this work
-      this.textureCache[mapKey] = canvas;
-      return canvas;
-    },
-
-    /**
-     * Draws all notes that are currently visible.
-     * Draws notes starting at (0, 0), translate() the canvas if this is not intended.
-     */
-    drawNotes(time) {
-      // Determine what we need to draw.
-      const visibleTicks = this.visibleTicks;
-      const visibleLayers = this.visibleLayers;
-      const pageStart = this.pageStart;
-      const pageEnd = this.pageEnd;
-
-      // The note rendering loop loops through all the layers, and then through each note we need to draw.
-      // `for (... of ...)` loops are not used because the index is required for coordinate calculations.
-      for (let l = 0; l < visibleLayers; l++) {
-        const layer = this.song.layers[l];
-        const y = l * ROW_HEIGHT;
-
-        for (let t = pageStart; t < pageEnd; t++) {
-          const x = (t - pageStart) * NOTE_SIZE;
-
-          // pageStart sometimes contains decimals that cannot be ignored because they change where things render.
-          // decimals are hopefully corrected here, but I really can't tell if it works.
-          const note = layer.notes[Math.ceil(t)];
-
-          if (!note) {
-            continue;
-          }
-
-          // debugger;
-
-          // If the note has been played recently (1s), we will make it render slightly transparent to indicate it
-          // was recently played.
-          const timeSincePlayed = note.lastPlayed === null ? Infinity : time - note.lastPlayed;
-          if (timeSincePlayed < 1000) {
-            // Opacity between 1 (played exactly 1s ago) and 0.5 (played exactly 0s ago)
-            this.ctx.globalAlpha = 1 - (1000 - timeSincePlayed) / 2000;
-          }
-
-          const texture = this.getNoteTexture(note.instrument, note.key);
-          this.ctx.drawImage(texture, x, y);
-
-          // If we mucked with the opacity, remeber to cleanup after ourselves.
-          if (timeSincePlayed < 1000) {
-            this.ctx.globalAlpha = 1;
-          }
-        }
-      }
     },
 
     /**
@@ -228,9 +145,9 @@ export default {
      * It can be dragged to "seek" around the song.
      */
     drawSeeker() {
-      // the current tick, relative to the displayed page.
-      const relativeTick = this.song.exactTick - this.pageStart;
-      const x = relativeTick * NOTE_SIZE;
+      // the current tick, relative to the current screen.
+      const screenRelativeTick = this.song.currentTick - this.pageStart;
+      const x = screenRelativeTick * NOTE_SIZE;
       this.ctx.fillStyle = "#000000";
 
       // subtract half the width from the x coordinate so the center of the bar is the true position
@@ -251,16 +168,18 @@ export default {
      * Draws a scrollbar at the bottom of the canvas.
      */
     drawScrollbar() {
-      const ticksOnScreen = this.pageEnd - this.pageStart;
-      const percentOnScreen = ticksOnScreen / this.song.size;
-      const percentToLeft = this.pageStart / this.song.size;
-
+      // The percentage of the screen that is currently on screen.
+      const percentOnScreen = this.visibleTicks / this.song.size;
       const scrollbarWidth = Math.max(percentOnScreen * this.canvas.width, SCROLLBAR_MIN_WIDTH);
+
+      // The percentage of the screen that is to the left of the screen.
+      const percentToLeft = this.pageStart / this.song.size;
       const scrollbarStart = percentToLeft * this.canvas.width;
+
       const startY = this.canvas.height - SCROLLBAR_HEIGHT;
 
+      // The mouse's intersection with the scrollbar changes its color.
       const mouseIntersects = this.mouseIntersects(scrollbarStart, startY, scrollbarWidth, SCROLLBAR_HEIGHT);
-
       if (mouseIntersects) {
         this.draggingScrollbar = this.mouse.left;
         if (this.mouse.left) {
@@ -278,8 +197,87 @@ export default {
         this.ctx.fillStyle = SCROLLBAR_INACTIVE_COLOR;
       }
 
-      // The main shape.
       this.ctx.fillRect(scrollbarStart, startY, scrollbarWidth, SCROLLBAR_HEIGHT);
+    },
+
+    /**
+     * Draws all notes that are currently visible.
+     * Draws notes starting at (0, 0), translate() the canvas if this is not intended.
+     */
+    drawNotes(time) {
+      /**
+       * Creates a texture for a noteblock with a given instrument and key.
+       */
+      const createNoteTexture = (instrument, key) => {
+        // Create a canvas that lets us do image operations
+        const canvas = document.createElement("canvas");
+        canvas.width = NOTE_SIZE;
+        canvas.height = NOTE_SIZE;
+
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(instrument.baseTexture, 0, 0);
+
+        // Draw the key text centered
+        ctx.fillStyle = "white";
+        ctx.font = "12px sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+
+        const keyText = KEY_TEXT[key % 12];
+        const octave = Math.floor(key / 12) + 1;
+        const text = keyText + octave.toString();
+        ctx.fillText(text, NOTE_SIZE / 2, NOTE_SIZE / 2);
+
+        return canvas;
+      };
+
+      // Determine what we need to draw.
+      const visibleTicks = this.visibleTicks;
+      const visibleLayers = this.visibleLayers;
+      const pageStart = this.pageStart;
+      const pageEnd = this.pageEnd;
+
+      // The note rendering loop loops through all the layers, and then through each note we need to draw.
+      // `for (... of ...)` loops are not used because the index is required for coordinate calculations.
+      for (let l = 0; l < visibleLayers; l++) {
+        const layer = this.song.layers[l];
+        const y = l * ROW_HEIGHT;
+
+        for (let t = pageStart; t < pageEnd; t++) {
+          const x = (t - pageStart) * NOTE_SIZE;
+          const note = layer.notes[t];
+
+          // Ofcourse theres no guarantee that a note exists at any point in a layer.
+          if (!note) {
+            continue;
+          }
+
+          // If the note has been played recently (1s), we will make it render slightly transparent to indicate it
+          // was recently played.
+          const timeSincePlayed = note.lastPlayed === null ? Infinity : time - note.lastPlayed;
+          if (timeSincePlayed < 1000) {
+            // Opacity between 1 (played exactly 1s ago) and 0.5 (played exactly 0s ago)
+            this.ctx.globalAlpha = 1 - (1000 - timeSincePlayed) / 2000;
+          }
+
+          // A hopefully unique id given to this note's texture.
+          // All notes with the same characteristics will have the same texture id.
+          const textureId = `${note.instrument.name}-${note.key}`;
+
+          // Creating the note textures is slow, so they're cached in a map.
+          // The texture is only created when it does not exist in the cache. (eg. once)
+          if (!this.textureCache.has(textureId)) {
+            const texture = createNoteTexture(note.instrument, note.key);
+            this.textureCache.set(textureId, texture);
+          }
+          this.ctx.drawImage(this.textureCache.get(textureId), x, y);
+
+          // If we mucked with the opacity, remeber to cleanup after ourselves.
+          if (timeSincePlayed < 1000) {
+            this.ctx.globalAlpha = 1;
+          }
+        }
+      }
     },
 
     /**
@@ -288,24 +286,25 @@ export default {
     draw(time) {
       // 1 row for each layer + 2 for rows for top and bottom
       const rows = this.song.layers.length + 2;
-
       this.canvas.height = rows * ROW_HEIGHT;
+
       // Width can change. Set it to the displayed width so nothing gets distorted.
+      // TODO: can this be done in just CSS?
       this.canvas.width = parseInt(window.getComputedStyle(this.canvas).width);
 
       // Reset canvas
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-      // Cursor will change later
+      // Reset the cursor so it can change.
       this.cursor = "";
 
       // Go to the next screen when the song has moved passed the end of this page.
-      if (this.song.exactTick > this.pageEnd) {
-        this.setPageStart(this.song.exactTick);
+      if (this.song.currentTick >= this.pageEnd) {
+        this.pageStart = this.song.tick;
       }
 
       // Go back a screen when the song has moved before our screen
-      if (this.song.exactTick < this.pageStart) {
-        this.setPageStart(this.song.exactTick - this.visibleTicks);
+      if (this.song.currentTick < this.pageStart) {
+        this.pageStart = this.song.tick;
       }
 
       // Draw notes

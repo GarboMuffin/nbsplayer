@@ -8,23 +8,68 @@ import { audioContext } from "./audio.js";
  * Represents a song.
  */
 export class Song {
-
-  // TODO: think in "current tick" instead of "current time"
-  // TODO: less getter/setter nonsense
-  // TODO: actually support all the fields in a real nbs file
-
   constructor() {
+    /**
+     * The name (or title) of this song.
+     */
     this.name = "";
+    /**
+     * The author of this song.
+     */
     this.author = "";
+    /**
+     * The original author of this song.
+     */
     this.originalAuthor = "";
+    /**
+     * The song's description.
+     */
     this.description = "";
+
+    /**
+     * Layers of the song
+     */
     this.layers = [];
-    this.currentTime = 0;
-    this.paused = true;
+    /**
+     * The tempo of the song in ticks per second.
+     */
     this.tempo = 5;
+    /**
+     * The total number of ticks in the song.
+     */
     this.size = 0;
+
+    /**
+     * The current playing tick of a song.
+     * Can contain decimals.
+     */
+    this.currentTick = 0;
+    /**
+     * Is the song paused? (as in, not playing)
+     */
+    this.paused = true;
   }
 
+  /**
+   * Adds a new layer to the song and returns it.
+   */
+  addLayer() {
+    const layer = new Layer(this, this.layers.length + 1);
+    this.layers.push(layer);
+    return layer;
+  }
+
+  /**
+   * Deletes a layer from the song.
+   */
+  deleteLayer(layer) {
+    const index = this.layers.indexOf(layer);
+    this.layers.splice(index, 1);
+  }
+
+  /**
+   * Sets a note at a given tick in a given layer
+   */
   setNote(layer, tick, note) {
     if (tick > this.size) {
       this.size = tick;
@@ -32,48 +77,50 @@ export class Song {
     layer.notes[tick] = note;
   }
 
-  addLayer() {
-    const layer = new Layer(this);
-    this.layers.push(layer);
-    return layer;
-  }
-
-  deleteLayer(layer) {
-    const index = this.layers.indexOf(layer);
-    this.layers.splice(index, 1);
-  }
-
+  /**
+   * Plays the song
+   */
   play() {
-    if (this.currentTime >= this.totalTime) {
-      this.currentTime = 0;
+    if (this.currentTick >= this.size) {
+      this.currentTick = 0;
     }
     this.paused = false;
   }
 
+  /**
+   * Pauses the song
+   */
   pause() {
     this.paused = true;
   }
 
-  get currentTick() {
-    return Math.floor(this.currentTime / this.msPerTick);
-  }
-  set currentTick(tick) {
-    this.currentTime = Math.max(tick * this.msPerTick, 0);
-  }
-
-  get exactTick() {
-    return this.currentTime / this.msPerTick;
-  }
-  set exactTick(tick) {
-    this.currentTime = Math.max(tick * this.msPerTick, 0);
-  }
-
-  get totalTime() {
-    return (this.size + 1) * this.msPerTick;
-  }
-
-  get msPerTick() {
+  /**
+   * The time that each takes, in milliseconds.
+   */
+  get timePerTick() {
     return 20 / this.tempo * 50;
+  }
+
+  /**
+   * The current time, in milliseconds, of the song.
+   */
+  get currentTime() {
+    return this.currentTick * this.timePerTick;
+  }
+
+  /**
+   * The length of the song in milliseconds.
+   */
+  get endTime() {
+    return this.size * this.timePerTick;
+  }
+
+  /**
+   * Gets the currently active tick in the song.
+   * Will not contain decimals.
+   */
+  get tick() {
+    return Math.floor(this.currentTick);
   }
 }
 
@@ -81,31 +128,65 @@ export class Song {
  * Represents a layer in a song
  */
 export class Layer {
-  constructor(song) {
+  constructor(song, id) {
+    /**
+     * The parent song of this layer.
+     */
     this.song = song;
+    /**
+     * The name of this layer.
+     */
     this.name = "";
+    /**
+     * The volume of this layer.
+     * A number between 0 and 1.
+     */
     this.volume = 1;
+    /**
+     * The notes within this layer.
+     * Not all indexes will have a note.
+     */
     this.notes = [];
-    this.id = Layer.lastId++;
+    /**
+     * The ID of this layer.
+     * Is not guaranteed to be unique.
+     */
+    this.id = id;
   }
 
+  /**
+   * Deletes this layer.
+   */
   delete() {
     this.song.deleteLayer(this);
   }
 
+  /**
+   * The placeholder name of this layer.
+   */
   get placeholder() {
     return "Layer " + this.id;
   }
 }
-Layer.lastId = 0;
 
 /**
  * Represents a note in a song
  */
 export class Note {
   constructor() {
+    /**
+     * The key of the note.
+     */
     this.key = 45;
+    /**
+     * The instrument of the note.
+     * TODO: null is not a good default value
+     */
     this.instrument = null;
+    /**
+     * The last time the note was played.
+     * TODO: does this need to be here?
+     */
     this.lastPlayed = null;
   }
 }
@@ -115,9 +196,22 @@ export class Note {
  */
 export class Instrument {
   constructor(name, audioSrc, textureSrc) {
+    /**
+     * The name of the instrument
+     */
     this.name = name;
+    /**
+     * The source to be fetched for the instrument's sound
+     */
     this.audioSrc = audioSrc;
+    /**
+     * The image to be fetched for the instrument's image in the editor
+     */
     this.textureSrc = textureSrc;
+    /**
+     * The resulting audio buffer that will contain the sound
+     * Set by loadAudio() or load()
+     */
     this.audioBuffer = null;
   }
 
@@ -156,53 +250,53 @@ Instrument.builtin = [
   // Vue will set the correct sources and sometimes inline images using require()
   new Instrument(
     "Piano/Harp",
-    require("./assets/instruments/harp.ogg"),
-    require("./assets/instruments/harp.png")
+    require("./assets/instruments/audio/harp.ogg"),
+    require("./assets/instruments/textures/harp.png")
   ),
   new Instrument(
     "Double Bass",
-    require("./assets/instruments/dbass.ogg"),
-    require("./assets/instruments/dbass.png")
+    require("./assets/instruments/audio/dbass.ogg"),
+    require("./assets/instruments/textures/dbass.png")
   ),
   new Instrument(
     "Bass Drum",
-    require("./assets/instruments/bdrum.ogg"),
-    require("./assets/instruments/bdrum.png")
+    require("./assets/instruments/audio/bdrum.ogg"),
+    require("./assets/instruments/textures/bdrum.png")
   ),
   new Instrument(
     "Snare Drum",
-    require("./assets/instruments/sdrum.ogg"),
-    require("./assets/instruments/sdrum.png")
+    require("./assets/instruments/audio/sdrum.ogg"),
+    require("./assets/instruments/textures/sdrum.png")
   ),
   new Instrument(
     "Click",
-    require("./assets/instruments/click.ogg"),
-    require("./assets/instruments/click.png")
+    require("./assets/instruments/audio/click.ogg"),
+    require("./assets/instruments/textures/click.png")
   ),
   new Instrument(
     "Guitar",
-    require("./assets/instruments/guitar.ogg"),
-    require("./assets/instruments/guitar.png")
+    require("./assets/instruments/audio/guitar.ogg"),
+    require("./assets/instruments/textures/guitar.png")
   ),
   new Instrument(
     "Flute",
-    require("./assets/instruments/flute.ogg"),
-    require("./assets/instruments/flute.png")
+    require("./assets/instruments/audio/flute.ogg"),
+    require("./assets/instruments/textures/flute.png")
   ),
   new Instrument(
     "Bell",
-    require("./assets/instruments/bell.ogg"),
-    require("./assets/instruments/bell.png")
+    require("./assets/instruments/audio/bell.ogg"),
+    require("./assets/instruments/textures/bell.png")
   ),
   new Instrument(
     "Chime",
-    require("./assets/instruments/chime.ogg"),
-    require("./assets/instruments/chime.png")
+    require("./assets/instruments/audio/chime.ogg"),
+    require("./assets/instruments/textures/chime.png")
   ),
   new Instrument(
     "Xylophone",
-    require("./assets/instruments/xylobone.ogg"),
-    require("./assets/instruments/xylophone.png")
+    require("./assets/instruments/audio/xylobone.ogg"),
+    require("./assets/instruments/textures/xylophone.png")
   ),
 ];
 
@@ -212,36 +306,52 @@ Instrument.builtin = [
 Song.fromArrayBuffer = function songFromArrayBuffer(arrayBuffer) {
   // https://www.stuffbydavid.com/mcnbs/format
 
-  // Create the song object right away. We'll be using it a lot.
+  // TODO: error handling
+
   const song = new Song();
-
-  let currentByte = 0;
   const viewer = new DataView(arrayBuffer);
+  let currentByte = 0;
 
+  /**
+   * Reads a signed byte from the buffer and advances the current byte by 1.
+   */
   function readByte() {
     const result = viewer.getInt8(currentByte, true);
     currentByte += 1;
     return result;
   }
 
+  /**
+   * Reads an unsigned byte form the buffer and advances the current byte by 1.
+   */
   function readUnsignedByte() {
     const result = viewer.getUint8(currentByte, true);
     currentByte += 1;
     return result;
   }
 
+  /**
+   * Reads a signed 2 byte number (eg. a short) from the buffer and advanced the current byte by 2.
+   */
   function readShort() {
     const result = viewer.getInt16(currentByte, true);
     currentByte += 2;
     return result;
   }
 
+  /**
+   * Reads a signed 4 byte number (eg. an integer) from the buffer and advanced the current byte by 4.
+   */
   function readInt() {
     const result = viewer.getInt32(currentByte, true);
     currentByte += 4;
     return result;
   }
 
+  /**
+   * Reads a string from the buffer and advanced the current byte until the end of the string.
+   * Strings begin with a signed integer (the length), followed by that many bytes of the string's data.
+   */
   function readString() {
     const length = readInt();
     let result = "";
@@ -271,6 +381,7 @@ Song.fromArrayBuffer = function songFromArrayBuffer(arrayBuffer) {
   const midiName = readString();
 
   // Note Blocks
+  // The format website linked somewhere above does a much better job at explaining this than I could.
   let currentTick = -1;
   const rawNotes = [];
   while (true) {
@@ -288,6 +399,7 @@ Song.fromArrayBuffer = function songFromArrayBuffer(arrayBuffer) {
       currentLayer += jumpsToNextLayer;
       const instrumentId = readByte();
       const key = readByte();
+      // We'll process the raw note into a real Note object later.
       rawNotes.push({
         instrument: instrumentId,
         key,
@@ -298,42 +410,40 @@ Song.fromArrayBuffer = function songFromArrayBuffer(arrayBuffer) {
   }
 
   // Layers
-  const layers = [];
   for (let i = 0; i < totalLayers; i++) {
-    const layer = new Layer(song);
+    const layer = song.addLayer();
     layer.name = readString();
     layer.volume = readByte() / 100;
-    layers.push(layer);
   }
 
-  // TODO: parse custom instruments
+  // TODO: custom instruments, at least acknowledge their existence
 
-  // Parsing is now done.
-
-  // Create the song
+  // Set the fields of the song to match the file
   song.author = songAuthor;
   song.name = songName;
   song.originalAuthor = originalSongAuthor;
   song.description = songDescription;
-  song.layers = layers;
-  // the raw tempo is ticks per second * 100, so divide by 100 to get the real number
+  // the raw tempo is ticks per second * 100, so divide by 100 to get the real tempo
+  song.size = size;
   song.tempo = tempo / 100;
-  song.paused = true;
 
-  // Process notes
-  // Cannot be done while parsing because information about layers does not exist yet.
-  // TODO: actually it could happen during parsing
+  // Process raw notes and convert them to real Note objects.
+  // Cannot be done while parsing because information about layers and other things might not exist yet.
   for (const rn of rawNotes) {
     const note = new Note();
     note.key = rn.key;
     note.instrument = Instrument.builtin[rn.instrument];
-    // If a note claims to be in a layer that doesn't exist, skip it.
-    // TODO: detemrine what NBS does in the scenario and copy that
-    if (rn.layer >= layers.length) {
-      console.warn("skipping note, layer does not exist", rn);
-      continue;
+
+    // If a note is in a layer that doesn't exist, we will have to create the layers for it.
+    // For an example file that does this, see Friday.nbs in an NBS installation
+    // TODO: determine what NBS does in this scenario, should they be skipped instead?
+    if (rn.layer >= song.layers.length) {
+      while (rn.layer >= song.layers.length) {
+        song.addLayer();
+      }
     }
-    const layer = layers[rn.layer];
+
+    const layer = song.layers[rn.layer];
     const tick = rn.tick;
     song.setNote(layer, tick, note);
   }

@@ -1,6 +1,6 @@
 <template>
-  <div class="flex flex-row timebox">
-    <div>
+  <div class="row flex flex-row timebox">
+    <div class="align-right">
       <div class="current">{{ currentTime }}</div>
       <div class="end">{{ endTime }}</div>
     </div>
@@ -18,7 +18,7 @@ export default {
       return this.formatTime(this.song.currentTime);
     },
     endTime() {
-      return this.formatTime(this.song.totalTime);
+      return this.formatTime(this.song.endTime);
     },
   },
   methods: {

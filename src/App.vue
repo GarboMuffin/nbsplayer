@@ -75,13 +75,8 @@ export default {
         requestAnimationFrame((time) => this.tick(time));
       });
 
-    // Create some starter layers.
-    for (var i = 0; i < 5; i++) {
-      this.song.addLayer();
-    }
-
-    // for debugging, expose the app
-    window.app = this;
+    // Add at least one layer to the song.
+    this.song.addLayer();
   },
 
   watch: {
@@ -91,6 +86,9 @@ export default {
   },
 
   methods: {
+    /**
+     * Loads a file as the current song.
+     */
     loadFile(file) {
       this.loading = true;
 
@@ -101,7 +99,12 @@ export default {
       // Promise wrapper so other functions can know if/when the loading finishes.
       return new Promise((resolve, reject) => {
         fileReader.onload = (e) => {
-          const song = NBS.Song.fromArrayBuffer(e.target.result);
+          try {
+            var song = NBS.Song.fromArrayBuffer(e.target.result);
+          } catch (e) {
+            reject(e);
+            return;
+          }
           this.song = song;
           this.loading = false;
           if (song.title || song.author || song.originalAuthor || song.description) {
@@ -113,6 +116,9 @@ export default {
       });
     },
 
+    /**
+     * Plays a note given its layer.
+     */
     playNote(note, layer) {
       // Determine the playbackRate using the key
       const keyChange = note.key - this.options.keyOffset;
@@ -137,31 +143,35 @@ export default {
       return source;
     },
 
+    /**
+     * Advanced the song forward.
+     */
     advanceSong(time, timePassed) {
       if (this.song.paused) {
         return;
       }
 
       // Handle the song ending.
-      if (this.song.currentTime >= this.song.totalTime) {
+      if (this.song.currentTick >= this.song.size) {
         if (this.options.loop) {
-          this.song.currentTime = 0;
+          this.song.currentTick = 0;
         } else {
           this.song.paused = true;
         }
         return;
       }
 
-      this.song.currentTime += timePassed;
+      const ticksPassed = timePassed / this.song.timePerTick;
+      this.song.currentTick += ticksPassed;
 
-      // Don't play the same tick several times.
-      if (this.song.currentTick === this.lastPlayedTick) {
+      // song.tick is a getter that uses currenTick, we do not have to manually set it.
+      if (this.song.tick === this.lastPlayedTick) {
         return;
       }
-      this.lastPlayedTick = this.song.currentTick;
+      this.lastPlayedTick = this.song.tick;
 
       for (const layer of this.song.layers) {
-        const note = layer.notes[this.song.currentTick];
+        const note = layer.notes[this.song.tick];
         if (note) {
           this.playNote(note, layer).connect(audioDestination);
           note.lastPlayed = time;
@@ -169,6 +179,9 @@ export default {
       }
     },
 
+    /**
+     * Global frame loop. Constantly called with requestAnimationFrame()
+     */
     tick(time) {
       requestAnimationFrame((time) => this.tick(time));
 
@@ -182,19 +195,19 @@ export default {
       this.advanceSong(time, timePassed);
 
       // Draw the canvas after updating the song.
-      this.$refs.canvas.draw(time);
+      if (this.$refs.canvas) {
+        this.$refs.canvas.draw(time);
+      }
     },
   }
 }
 </script>
 
 <style>
+/* Make body look half decent */
 body {
   font-family: sans-serif;
   margin: 0;
-}
-code {
-  font-family: "Consolas", "Courier New", Courier, monospace;
 }
 
 /* Make links look more like links by default */
@@ -203,14 +216,6 @@ a {
 }
 a:hover {
   text-decoration: underline;
-}
-
-table.compact,
-table.compact tr,
-table.compact th,
-table.compact td {
-  padding: 0;
-  border-collapse: collapse;
 }
 
 /* Hide spinners on some numer inputs */
@@ -222,6 +227,8 @@ table.compact td {
   -webkit-appearance: none;
   margin: 0;
 }
+
+/* Utility Classes */
 
 /* Flex Styles */
 .flex {
@@ -235,6 +242,16 @@ table.compact td {
 }
 .flex-center {
   align-items: center;
+}
+/* Aligning text */
+.align-left {
+  text-align: left;
+}
+.align-right {
+  text-align: right;
+}
+.align-center {
+  text-align: center;
 }
 
 /* Overlays */

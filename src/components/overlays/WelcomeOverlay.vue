@@ -35,7 +35,10 @@ export default {
         .then(() => this.hide());
     },
     newSong() {
-      this.$parent.song = new NBS.Song();
+      const song = new NBS.Song();
+      // start it off with a single layer
+      song.addLayer();
+      this.$parent.song = song;
       this.hide();
     },
   },

@@ -1,4 +1,4 @@
-// Yell at the user if the browser does not support audiocontext
+// Yell at the user if the browser does not support AudioContext
 if (!window.AudioContext) {
   alert("Browser not supported. (does not support AudioContext)");
 }
