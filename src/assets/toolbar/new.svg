@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="16"
+   height="16"
+   viewBox="0 0 4.2333333 4.2333333"
+   version="1.1"
+   id="svg8"
+   sodipodi:docname="new.svg"
+   inkscape:version="0.92.3 (2405546, 2018-03-11)">
+  <defs
+     id="defs2" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="44.8"
+     inkscape:cx="10.041555"
+     inkscape:cy="9.8403188"
+     inkscape:document-units="mm"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     units="px"
+     inkscape:window-width="1501"
+     inkscape:window-height="872"
+     inkscape:window-x="345"
+     inkscape:window-y="91"
+     inkscape:window-maximized="0" />
+  <metadata
+     id="metadata5">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(0,-292.76665)">
+    <path
+       style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:1.0221827;stroke-miterlimit:4;stroke-dasharray:none"
+       d="M 4.8710938 2 C 4.3884617 2 4 2.3884481 4 2.8710938 L 4 13.128906 C 4 13.611514 4.3884617 14 4.8710938 14 L 11.128906 14 C 11.611538 14 12 13.611514 12 13.128906 L 12 5.3144531 L 9.4277344 5.3144531 C 9.0167601 5.3144531 8.6855469 4.9832399 8.6855469 4.5722656 L 8.6855469 2 L 4.8710938 2 z "
+       transform="matrix(0.26458333,0,0,0.26458333,0,292.76665)"
+       id="rect8" />
+    <path
+       style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.10302637;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 3.1513287,293.93607 2.5451681,293.3299 v 0.60617 z"
+       id="path4543"
+       inkscape:connector-curvature="0" />
+  </g>
+</svg>

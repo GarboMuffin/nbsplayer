@@ -1,14 +1,15 @@
 <template>
-  <div class="overlay flex flex-row" v-show="computedVisible">
+  <div class="flex flex-row">
     <div class="about section">
       <h1>nbsplayer</h1>
-      <small>Note Block Studio as a website. Beta.</small>
+      <div><small>Note Block Studio as a website.</small></div>
+      <div><small>Editing will be supported soon.</small></div>
     </div>
     <div class="actions section">
       <div class="load-song button flex flex-row flex-center">
         <font-awesome-icon icon="folder-open" fixed-width size="2x"></font-awesome-icon>
         <div class="button-body">Load a song</div>
-        <input class="file-input" type="file" accept=".nbs" @change="loadFile">
+        <input class="file-input" type="file" accept=".nbs" @change="inputFile">
       </div>
       <div class="new-song button flex flex-row flex-center" @click="newSong">
         <font-awesome-icon icon="file" fixed-width size="2x"></font-awesome-icon>
@@ -23,22 +24,18 @@
 </template>
 
 <script>
-import overlayMixin from "./overlay.js";
 import * as NBS from "../../NBS.js";
 
 export default {
-  mixins: [overlayMixin],
+  inject: ["hide", "loadFile"],
   methods: {
-    loadFile(event) {
+    inputFile(event) {
       const file = event.target.files[0];
-      this.$parent.loadFile(file)
+      this.loadFile(file)
         .then(() => this.hide());
     },
     newSong() {
-      const song = new NBS.Song();
-      // start it off with a single layer
-      song.addLayer();
-      this.$parent.song = song;
+      this.$parent.song = NBS.Song.new();
       this.hide();
     },
   },

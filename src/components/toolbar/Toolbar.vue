@@ -1,29 +1,42 @@
 <template>
   <div class="flex flex-row">
+    <a @click="newSong" class="open button" title="New">
+      <img class="button-image" src="@/assets/toolbar/new.svg" alt="New">
+    </a>
+
     <a class="open button" title="Open">
       <img class="button-image" src="@/assets/toolbar/open.svg" alt="Open">
       <input type="file" accept=".nbs" @change="loadFile">
     </a>
+
     <span class="separator"></span>
+
     <a @click="play" :value="!song.paused" class="button" title="Play">
       <img class="button-image" src="@/assets/toolbar/play.svg" alt="Play">
     </a>
+
     <a @click="pause" :value="song.paused" class="button" title="Pause">
       <img class="button-image" src="@/assets/toolbar/pause.svg" alt="Pause">
     </a>
+
     <a @click="stop" class="button" title="Stop">
       <img class="button-image" src="@/assets/toolbar/stop.svg" alt="Stop">
     </a>
+
     <span class="separator"></span>
+
     <a @click="options.loop = !options.loop" :value="options.loop" title="Loop" class="button">
       <img class="button-image" src="@/assets/toolbar/loop.svg" alt="Loop">
     </a>
+
     <a @click="openInfo" title="Info" class="button">
       <img class="button-image" src="@/assets/toolbar/info.svg" alt="Info">
     </a>
+
     <a @click="openSettings" title="Settings" class="button">
       <img class="button-image" src="@/assets/toolbar/settings.svg" alt="Settings">
     </a>
+
     <a title="Volume" class="volume button">
       <img class="button-image" src="@/assets/toolbar/volume.svg" alt="Volume">
       <input type="range" name="volume" v-model.number="options.volume" min="0" max="1" step="0.01">
@@ -33,8 +46,13 @@
 </template>
 
 <script>
+import * as NBS from "@/NBS.js";
+
 export default {
-  props: ["song", "options"],
+  props: {
+    song: NBS.Song,
+    options: Object,
+  },
   data() {
     return {
       
@@ -85,6 +103,9 @@ export default {
       const file = e.target.files[0];
       this.$parent.loadFile(file);
     },
+    newSong() {
+      this.$parent.song = NBS.Song.new();
+    }
   },
 }
 </script>
@@ -146,5 +167,6 @@ export default {
   left: 0;
   width: 100%;
   height: 100%;
+  cursor: pointer;
 }
 </style>

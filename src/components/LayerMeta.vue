@@ -11,8 +11,12 @@
 </template>
 
 <script>
+import * as NBS from "../NBS.js";
+
 export default {
-  props: ["layer"],
+  props: {
+    layer: NBS.Layer,
+  },
 };
 </script>
 

@@ -8,6 +8,8 @@
 </template>
 
 <script>
+import * as NBS from "../NBS.js";
+
 const ROW_HEIGHT = 32;
 const NOTE_SIZE = 32;
 
@@ -25,7 +27,9 @@ const KEY_TEXT = [
 ];
 
 export default {
-  props: ["song"],
+  props: {
+    song: NBS.Song,
+  },
   data() {
     return {
       canvas: null,
@@ -287,9 +291,6 @@ export default {
       // 1 row for each layer + 2 for rows for top and bottom
       const rows = this.song.layers.length + 2;
       this.canvas.height = rows * ROW_HEIGHT;
-
-      // Width can change. Set it to the displayed width so nothing gets distorted.
-      // TODO: can this be done in just CSS?
       this.canvas.width = parseInt(window.getComputedStyle(this.canvas).width);
 
       // Reset canvas
@@ -333,6 +334,8 @@ export default {
 <style scoped>
 canvas {
   width: 100%;
+  /* 200px is roughly size of layer list */
+  max-width: calc(100vw - 200px);
   height: 100%;
   /* a 1x64 repeating background image that matches the colors used in the layer list */
   background-image: url("../assets/canvasbackground.jpg");

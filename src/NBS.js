@@ -71,8 +71,8 @@ export class Song {
    * Sets a note at a given tick in a given layer
    */
   setNote(layer, tick, note) {
-    if (tick > this.size) {
-      this.size = tick;
+    if (tick + 1 > this.size) {
+      this.size = tick + 1;
     }
     layer.notes[tick] = note;
   }
@@ -448,5 +448,14 @@ Song.fromArrayBuffer = function songFromArrayBuffer(arrayBuffer) {
     song.setNote(layer, tick, note);
   }
 
+  return song;
+};
+
+/**
+ * Creates a new song that is setup to be used.
+ */
+Song.new = function newSong() {
+  const song = new Song();
+  song.addLayer();
   return song;
 };

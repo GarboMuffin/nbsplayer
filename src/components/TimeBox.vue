@@ -5,14 +5,24 @@
       <div class="end">{{ endTime }}</div>
     </div>
     <div class="flex flex-center">
-      <input type="number" v-model="song.tempo" class="no-spinners" name="tempo" step="any" title="Tempo in ticks/second">
+      <div :friendly="isVanillaFriendlyTempo" @click.self="focusTempo" class="tempo-container" title="Tempo in ticks per second">
+        <input ref="tempo" type="number" v-model.number="song.tempo" class="no-spinners" name="tempo" step="0.25">
+      </div>
     </div>
   </div>
 </template>
 
 <script>
+import * as NBS from "@/NBS.js";
+
+const VANILLA_FRIENDLY_TEMPOS = [
+  2.5, 5, 10,
+];
+
 export default {
-  props: ["song"],
+  props: {
+    song: NBS.Song,
+  },
   computed: {
     currentTime() {
       return this.formatTime(this.song.currentTime);
@@ -20,6 +30,9 @@ export default {
     endTime() {
       return this.formatTime(this.song.endTime);
     },
+    isVanillaFriendlyTempo() {
+      return VANILLA_FRIENDLY_TEMPOS.includes(this.song.tempo);
+    }
   },
   methods: {
     formatTime(ms) {
@@ -29,6 +42,9 @@ export default {
       const seconds = Math.floor(time % 60).toString().padStart(2, "0");
       const millis = Math.floor(ms % 1000).toString().padStart(3, "0");
       return `${hours}:${minutes}:${seconds}.${millis}`;
+    },
+    focusTempo() {
+      this.$refs.tempo.focus();
     },
   }
 };
@@ -45,7 +61,23 @@ export default {
 .current {
   font-weight: bold;
 }
+.end {
+  font-size: 11px;
+}
+.tempo-container {
+  border: 1px solid black;
+  cursor: text;
+}
+.tempo-container::after {
+  content: " t/s";
+}
+.tempo-container:not([friendly]) {
+  background-color: rgb(255, 213, 213);
+}
 input[name="tempo"] {
   width: 35px;
+  text-align: right;
+  border: 0;
+  background-color: inherit;
 }
 </style>

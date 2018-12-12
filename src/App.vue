@@ -1,11 +1,22 @@
 <template>
   <div id="app">
-    <!-- Overlays -->
 
-    <loading-overlay :visible="loading"></loading-overlay>
-    <welcome-overlay ref="welcomeOverlay" :visible="showWelcome"></welcome-overlay>
-    <song-details-overlay ref="songDetailsOverlay" :song="song"></song-details-overlay>
-    <settings-overlay ref="settingsOverlay" :options="options"></settings-overlay>
+    <!-- Overlays -->
+    <overlay :visible="showWelcome" ref="welcomeOverlay" dismissable>
+      <welcome-overlay></welcome-overlay>
+    </overlay>
+
+    <overlay :visible="loading">
+      <loading-overlay></loading-overlay>
+    </overlay>
+
+    <overlay ref="songDetailsOverlay" dismissable>
+      <song-details-overlay :song="song"></song-details-overlay>
+    </overlay>
+
+    <overlay ref="settingsOverlay" dismissable>
+      <settings-overlay :options="options"></settings-overlay>
+    </overlay>
 
     <!-- Core Interface -->
     <div id="main" class="flex flex-column">
@@ -32,6 +43,7 @@ import { audioContext, audioDestination } from "./audio.js";
 import NoteCanvas from "./components/NoteCanvas.vue";
 import LayerMeta from "./components/LayerMeta.vue";
 import TimeBox from "./components/TimeBox.vue";
+import Overlay from "./components/overlays/Overlay.vue";
 import LoadingOverlay from "./components/overlays/LoadingOverlay.vue";
 import WelcomeOverlay from "./components/overlays/WelcomeOverlay.vue";
 import SettingsOverlay from "./components/overlays/SettingsOverlay.vue";
@@ -42,6 +54,7 @@ export default {
   components: {
     NoteCanvas,
     LayerMeta,
+    Overlay,
     LoadingOverlay,
     WelcomeOverlay,
     SettingsOverlay,
@@ -54,7 +67,7 @@ export default {
     return {
       loading: true,
       showWelcome: false,
-      song: new NBS.Song(),
+      song: NBS.Song.new(),
       previousTime: -1,
       lastPlayedTick: -1,
       options: {
@@ -62,6 +75,12 @@ export default {
         loop: false,
         volume: 1,
       },
+    };
+  },
+
+  provide() {
+    return {
+      loadFile: this.loadFile,
     };
   },
 
@@ -74,9 +93,6 @@ export default {
         this.showWelcome = true;
         requestAnimationFrame((time) => this.tick(time));
       });
-
-    // Add at least one layer to the song.
-    this.song.addLayer();
   },
 
   watch: {
@@ -254,23 +270,9 @@ a:hover {
   text-align: center;
 }
 
-/* Overlays */
-.overlay {
-  /* always centered */
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  /* make it look half decent */
-  background-color: #ededed;
-  border-left: 1px solid #e4e4e4;
-  border-top: 1px solid #e4e4e4;
-  border-radius: 7px;
-  padding: 15px 30px;
-  box-shadow: 3px 3px #111;
-  /* visibility is handled by js */
+#main {
+  width: 100vw;
 }
-
 #layer-list {
   height: 100%;
   border-right: 1px solid #777;
@@ -282,5 +284,7 @@ a:hover {
 #middle {
   border-top: 1px solid #777;
   border-bottom: 1px solid #777;
+  max-width: 100vw;
+  overflow-y: scroll;
 }
 </style>
