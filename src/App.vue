@@ -123,7 +123,7 @@ export default {
           }
           this.song = song;
           this.loading = false;
-          if (song.title || song.author || song.originalAuthor || song.description) {
+          if (song.name || song.author || song.originalAuthor || song.description) {
             this.$refs.songDetailsOverlay.show();
           }
           resolve(song);
