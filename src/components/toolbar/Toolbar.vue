@@ -4,6 +4,10 @@
       <img class="button-image" src="@/assets/toolbar/new.svg" alt="New">
     </a>
 
+    <a @click="save" class="button" title="Save">
+      <img class="button-image" src="@/assets/toolbar/save.svg" alt="Save">
+    </a>
+
     <a class="open button" title="Open">
       <img class="button-image" src="@/assets/toolbar/open.svg" alt="Open">
       <input type="file" accept=".nbs" @change="loadFile">
@@ -105,6 +109,23 @@ export default {
     },
     newSong() {
       this.$parent.song = NBS.Song.new();
+    },
+    save() {
+      const buffer = NBS.Song.toArrayBuffer(this.song);
+      const array = new Uint8Array(buffer);
+      const blob = new Blob([buffer], {
+        type: "application/octet-stream",
+      });
+      var url = URL.createObjectURL(blob);
+
+      // Create a link and click on it automatically.
+      // This is dirty and probably won't work in some browsers.
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "song.nbs";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
   },
 }

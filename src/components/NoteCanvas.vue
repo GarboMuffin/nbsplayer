@@ -266,7 +266,7 @@ export default {
 
           // A hopefully unique id given to this note's texture.
           // All notes with the same characteristics will have the same texture id.
-          const textureId = `${note.instrument.name}-${note.key}`;
+          const textureId = `${note.instrument.id}-${note.key}`;
 
           // Creating the note textures is slow, so they're cached in a map.
           // The texture is only created when it does not exist in the cache. (eg. once)

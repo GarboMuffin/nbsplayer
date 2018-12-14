@@ -48,6 +48,34 @@ export class Song {
      * Is the song paused? (as in, not playing)
      */
     this.paused = true;
+    /**
+     * The song's time signature.
+     */
+    this.timeSignature = 4;
+    /**
+     * The minutes spent editing the song.
+     */
+    this.minutesSpent = 0;
+    /**
+     * The total left clicks of the song.
+     */
+    this.leftClicks = 0;
+    /**
+     * The total right clicks of the song.
+     */
+    this.rightClicks = 0;
+    /**
+     * Blocks added to the song.
+     */
+    this.blocksAdded = 0;
+    /**
+     * Blocks removed from the song.
+     */
+    this.blocksRemoved = 0;
+    /**
+     * The name of the MIDI or schematic that this song was imported from.
+     */
+    this.midiName = "";
   }
 
   /**
@@ -65,16 +93,6 @@ export class Song {
   deleteLayer(layer) {
     const index = this.layers.indexOf(layer);
     this.layers.splice(index, 1);
-  }
-
-  /**
-   * Sets a note at a given tick in a given layer
-   */
-  setNote(layer, tick, note) {
-    if (tick + 1 > this.size) {
-      this.size = tick + 1;
-    }
-    layer.notes[tick] = note;
   }
 
   /**
@@ -162,6 +180,28 @@ export class Layer {
   }
 
   /**
+   * Sets the note at a given tick with a given key and instrument.
+   * Automatically expands the song's size if it has now grown.
+   */
+  setNote(tick, key, instrument) {
+    if (tick + 1 > this.song.size) {
+      this.song.size = tick + 1;
+    }
+    const note = new Note(this, tick);
+    note.key = key;
+    note.instrument = instrument;
+    this.notes[tick] = note;
+  }
+
+  /**
+   * Deletes the tick at a given tick in the song.
+   * Does not automatically shrink the song if it has now shrunk in size.
+   */
+  deleteNote(tick) {
+    delete this.notes[tick];
+  }
+
+  /**
    * The placeholder name of this layer.
    */
   get placeholder() {
@@ -173,7 +213,15 @@ export class Layer {
  * Represents a note in a song
  */
 export class Note {
-  constructor() {
+  constructor(layer, tick) {
+    /**
+     * The layer this note is in
+     */
+    this.layer = layer;
+    /**
+     * The tick that the note lives in
+     */
+    this.tick = tick;
     /**
      * The key of the note.
      */
@@ -195,11 +243,11 @@ export class Note {
  * Represents an instrument
  */
 export class Instrument {
-  constructor(name, audioSrc, textureSrc) {
+  constructor(id, audioSrc, textureSrc) {
     /**
-     * The name of the instrument
+     * The ID of the instrument
      */
-    this.name = name;
+    this.id = id;
     /**
      * The source to be fetched for the instrument's sound
      */
@@ -249,52 +297,52 @@ export class Instrument {
 Instrument.builtin = [
   // Vue will set the correct sources and sometimes inline images using require()
   new Instrument(
-    "Piano/Harp",
+    0,
     require("./assets/instruments/audio/harp.ogg"),
     require("./assets/instruments/textures/harp.png")
   ),
   new Instrument(
-    "Double Bass",
+    1,
     require("./assets/instruments/audio/dbass.ogg"),
     require("./assets/instruments/textures/dbass.png")
   ),
   new Instrument(
-    "Bass Drum",
+    2,
     require("./assets/instruments/audio/bdrum.ogg"),
     require("./assets/instruments/textures/bdrum.png")
   ),
   new Instrument(
-    "Snare Drum",
+    3,
     require("./assets/instruments/audio/sdrum.ogg"),
     require("./assets/instruments/textures/sdrum.png")
   ),
   new Instrument(
-    "Click",
+    4,
     require("./assets/instruments/audio/click.ogg"),
     require("./assets/instruments/textures/click.png")
   ),
   new Instrument(
-    "Guitar",
+    5,
     require("./assets/instruments/audio/guitar.ogg"),
     require("./assets/instruments/textures/guitar.png")
   ),
   new Instrument(
-    "Flute",
+    6,
     require("./assets/instruments/audio/flute.ogg"),
     require("./assets/instruments/textures/flute.png")
   ),
   new Instrument(
-    "Bell",
+    7,
     require("./assets/instruments/audio/bell.ogg"),
     require("./assets/instruments/textures/bell.png")
   ),
   new Instrument(
-    "Chime",
+    8,
     require("./assets/instruments/audio/chime.ogg"),
     require("./assets/instruments/textures/chime.png")
   ),
   new Instrument(
-    "Xylophone",
+    9,
     require("./assets/instruments/audio/xylobone.ogg"),
     require("./assets/instruments/textures/xylophone.png")
   ),
@@ -305,8 +353,6 @@ Instrument.builtin = [
  */
 Song.fromArrayBuffer = function songFromArrayBuffer(arrayBuffer) {
   // https://www.stuffbydavid.com/mcnbs/format
-
-  // TODO: error handling
 
   const song = new Song();
   const viewer = new DataView(arrayBuffer);
@@ -363,22 +409,22 @@ Song.fromArrayBuffer = function songFromArrayBuffer(arrayBuffer) {
   }
 
   // Header
-  const size = readShort();
+  song.size = readShort();
   const totalLayers = readShort();
-  const songName = readString();
-  const songAuthor = readString();
-  const originalSongAuthor = readString();
-  const songDescription = readString();
-  const tempo = readShort();
-  const autoSaveEnabled = readByte();
-  const autoSaveDuration = readByte();
-  const timeSignature = readByte();
-  const minutesSpent = readInt();
-  const leftClicks = readInt();
-  const rightClicks = readInt();
-  const blocksAdded = readInt();
-  const blocksRemoved = readInt();
-  const midiName = readString();
+  song.name = readString();
+  song.author = readString();
+  song.originalAuthor = readString();
+  song.description = readString();
+  song.tempo = readShort() / 100; // tempo is stored as real tempo * 100
+  readByte(); // auto save enabled (0/1), unused
+  readByte(); // auto save duration, unused
+  song.timeSignature = readByte();
+  song.minutesSpent = readInt();
+  song.leftClicks = readInt();
+  song.rightClicks = readInt();
+  song.blocksAdded = readInt();
+  song.blocksRemoved = readInt();
+  song.midiName = readString();
 
   // Note Blocks
   // The format website linked somewhere above does a much better job at explaining this than I could.
@@ -399,6 +445,7 @@ Song.fromArrayBuffer = function songFromArrayBuffer(arrayBuffer) {
       currentLayer += jumpsToNextLayer;
       const instrumentId = readByte();
       const key = readByte();
+
       // We'll process the raw note into a real Note object later.
       rawNotes.push({
         instrument: instrumentId,
@@ -409,34 +456,20 @@ Song.fromArrayBuffer = function songFromArrayBuffer(arrayBuffer) {
     }
   }
 
-  // Layers
-  for (let i = 0; i < totalLayers; i++) {
-    const layer = song.addLayer();
-    layer.name = readString();
-    layer.volume = readByte() / 100;
+  // Layers (optional section)
+  if (arrayBuffer.byteLength > currentByte) {
+    for (let i = 0; i < totalLayers; i++) {
+      const layer = song.addLayer();
+      layer.name = readString();
+      layer.volume = readByte() / 100;
+    }
   }
-
-  // TODO: custom instruments, at least acknowledge their existence
-
-  // Set the fields of the song to match the file
-  song.author = songAuthor;
-  song.name = songName;
-  song.originalAuthor = originalSongAuthor;
-  song.description = songDescription;
-  // the raw tempo is ticks per second * 100, so divide by 100 to get the real tempo
-  song.size = size;
-  song.tempo = tempo / 100;
 
   // Process raw notes and convert them to real Note objects.
   // Cannot be done while parsing because information about layers and other things might not exist yet.
   for (const rn of rawNotes) {
-    const note = new Note();
-    note.key = rn.key;
-    note.instrument = Instrument.builtin[rn.instrument];
-
     // If a note is in a layer that doesn't exist, we will have to create the layers for it.
-    // For an example file that does this, see Friday.nbs in an NBS installation
-    // TODO: determine what NBS does in this scenario, should they be skipped instead?
+    // For an example file that does this, see Friday.nbs in any NBS installation
     if (rn.layer >= song.layers.length) {
       while (rn.layer >= song.layers.length) {
         song.addLayer();
@@ -444,11 +477,165 @@ Song.fromArrayBuffer = function songFromArrayBuffer(arrayBuffer) {
     }
 
     const layer = song.layers[rn.layer];
+    const key = rn.key;
     const tick = rn.tick;
-    song.setNote(layer, tick, note);
+    const instrument = Instrument.builtin[rn.instrument];
+
+    layer.setNote(tick, key, instrument);
   }
 
   return song;
+};
+
+/**
+ * Converts a song to an array buffer containing the bytes of the corresponding .nbs file
+ */
+Song.toArrayBuffer = function songToArrayBuffer(song) {
+  // https://www.stuffbydavid.com/mcnbs/format
+
+  // Writing to a buffer involves 2 "passes".
+  // 1 to determine the size of the buffer, and the other to actually write the file.
+  // There are probably better ways to do this, but this works.
+
+  /**
+   * Uses provided data operations to write the data of the song.
+   */
+  function write({
+    writeString,
+    writeByte,
+    writeShort,
+    writeInt,
+  }) {
+    // Part 1 - Header
+    writeShort(song.size);
+    writeShort(song.layers.length);
+    writeString(song.name);
+    writeString(song.author);
+    writeString(song.originalAuthor);
+    writeString(song.description);
+    writeShort(song.tempo * 100); // tempo is stored as the real tempo * 100
+    writeByte(0); // auto save enabled
+    writeByte(0); // auto save duration
+    writeByte(song.timeSignature); // time signature
+    writeInt(song.minutesSpent); // minutes spent
+    writeInt(song.leftClicks); // left clicks
+    writeInt(song.rightClicks); // right clicks
+    writeInt(song.blocksAdded); // blocks added
+    writeInt(song.blocksRemoved); // blocks removed
+    writeString(song.midiName); // midi/schematic name
+
+    // Part 2 - Notes
+    let currentTick = -1;
+    for (let i = 0; i < song.size; i++) {
+      // Determine if there are any notes in this tick.
+      let hasNotes = false;
+      for (const layer of song.layers) {
+        if (layer.notes[i]) {
+          hasNotes = true;
+          break;
+        }
+      }
+
+      if (!hasNotes) {
+        continue;
+      }
+
+      const jumpsToNextTick = i - currentTick;
+      currentTick = i;
+
+      // Part 2 step 1
+      writeShort(jumpsToNextTick);
+
+      let currentLayer = -1;
+
+      for (let j = 0; j < song.layers.length; j++) {
+        const layer = song.layers[j];
+        const note = layer.notes[i];
+        if (note) {
+          const jumpsToNextLayer = j - currentLayer;
+          currentLayer = j;
+          writeShort(jumpsToNextLayer); // Part 2 step 2 - jumps to next layer
+          writeByte(note.instrument.id); // Part 2 step 3 - instrument
+          writeByte(note.key); // Part 2 step 4 - key
+        }
+      }
+
+      // Part 2 step 2 - end tick
+      writeShort(0);
+    }
+    // Part 2 step 1 - end note section
+    writeShort(0);
+
+    // Part 3 - Layers
+    for (const layer of song.layers) {
+      writeString(layer.name);
+      writeByte(Math.floor(layer.volume * 100)); // we store volume as 0-1 but it the format needs 0-100
+    }
+
+    // Part 4 - Custom Instruments.
+    // Since custom instruments are not supported, we use just 0 custom instruments.
+    writeByte(0);
+  }
+
+  // In the first pass all the writing operations just accumlate to the bufferSize.
+  // We'll use this to make the array buffer later for the actual writing.
+  let bufferSize = 0;
+  write({
+    writeString(str) {
+      // 1 byte for each character + 4 bytes for length
+      bufferSize += str.length + 4;
+    },
+    writeByte() {
+      bufferSize += 1;
+    },
+    writeShort() {
+      bufferSize += 2;
+    },
+    writeInt() {
+      bufferSize += 4;
+    },
+  });
+
+  // Use the determined size to actually do the writing.
+  const arrayBuffer = new ArrayBuffer(bufferSize);
+  const dataView = new DataView(arrayBuffer);
+  let currentByte = 0;
+  write({
+    // pass real byte writing methods.
+    writeByte,
+    writeShort,
+    writeInt,
+    writeString,
+  });
+
+  function writeByte(byte) {
+    dataView.setInt8(currentByte, byte, true);
+    currentByte += 1;
+  }
+
+  function writeUnsignedByte(byte) {
+    dataView.setUint8(currentByte, byte, true);
+    currentByte += 1;
+  }
+
+  function writeShort(short) {
+    dataView.setInt16(currentByte, short, true);
+    currentByte += 2;
+  }
+
+  function writeInt(int) {
+    dataView.setInt32(currentByte, int, true);
+    currentByte += 4;
+  }
+
+  function writeString(string) {
+    writeInt(string.length);
+    for (const i of string) {
+      writeUnsignedByte(i.charCodeAt(0));
+    }
+  }
+
+  return arrayBuffer;
 };
 
 /**
