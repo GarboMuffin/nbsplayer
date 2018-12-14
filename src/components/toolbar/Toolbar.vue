@@ -122,7 +122,7 @@ export default {
       // This is dirty and probably won't work in some browsers.
       const link = document.createElement("a");
       link.href = url;
-      link.download = "song.nbs";
+      link.download = (this.song.name || "song") + ".nbs";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
