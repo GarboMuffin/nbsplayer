@@ -1,10 +1,10 @@
 <template>
   <div class="details">
     <h2 class="title">{{ title }}</h2>
-    <div v-show="song.author">Created by <b class="author">{{ song.author }}</b></div>
-    <div v-show="song.originalAuthor">Originally created by <b class="original-author">{{ song.originalAuthor }}</b></div>
+    <div v-if="song.author">Created by <b class="author">{{ song.author }}</b></div>
+    <div v-if="song.originalAuthor">Originally created by <b class="original-author">{{ song.originalAuthor }}</b></div>
 
-    <div><textarea readonly class="description" v-show="song.description" v-model="song.description"></textarea></div>
+    <div><textarea readonly class="description" v-if="song.description" v-model="song.description"></textarea></div>
 
     <div><button @click="hide">Dismiss</button></div>
   </div>

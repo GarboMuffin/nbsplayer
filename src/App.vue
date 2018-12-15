@@ -30,7 +30,9 @@
           <button @click="song.addLayer()" class="row">+ layer</button>
         </div>
 
-        <note-canvas :song="song" ref="canvas"></note-canvas>
+        <div id="canvas-container">
+          <note-canvas :song="song" ref="canvas"></note-canvas>
+        </div>
       </div>
     </div>
 
@@ -284,7 +286,9 @@ a:hover {
 #middle {
   border-top: 1px solid #777;
   border-bottom: 1px solid #777;
-  max-width: 100vw;
-  overflow-y: scroll;
+}
+#canvas-container {
+  width: 100%;
+  max-height: 100%;
 }
 </style>

@@ -1,6 +1,6 @@
 <template>
-  <div class="overlay-container" v-show="computedVisible" @click.self="dismiss">
-    <div class="overlay" v-show="computedVisible">
+  <div class="overlay-container" v-if="computedVisible" @click.self="dismiss">
+    <div class="overlay">
       <slot></slot>
     </div>
   </div>
@@ -46,6 +46,7 @@ export default {
       return this.visible;
     }
   },
+
   methods: {
     hide() {
       this.forcedVisible = false;

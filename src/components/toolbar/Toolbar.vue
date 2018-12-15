@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-row">
-    <a @click="newSong" class="open button" title="New">
+    <a @click="newSong" class="button" title="New">
       <img class="button-image" src="@/assets/toolbar/new.svg" alt="New">
     </a>
 
@@ -141,8 +141,8 @@ export default {
   border: 1px solid transparent;
   border-radius: 3px;
   display: inline-block;
-  width: 18px;
-  height: 18px;
+  width: calc(10px + 1vh);
+  height: calc(10px + 1vh);
   padding: 2px;
   margin: 2px;
   text-decoration: none;
@@ -158,8 +158,8 @@ export default {
   background-image: linear-gradient(#ccc, #aaa);
 }
 .button-image {
-  width: 18px;
-  height: 18px;
+  width: 100%;
+  height: 100%;
 }
 
 .volume:hover {

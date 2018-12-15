@@ -269,7 +269,7 @@ export default {
           const textureId = `${note.instrument.id}-${note.key}`;
 
           // Creating the note textures is slow, so they're cached in a map.
-          // The texture is only created when it does not exist in the cache. (eg. once)
+          // The texture is only created when it does not exist in the cache.
           if (!this.textureCache.has(textureId)) {
             const texture = createNoteTexture(note.instrument, note.key);
             this.textureCache.set(textureId, texture);
@@ -295,7 +295,7 @@ export default {
 
       // Reset canvas
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-      // Reset the cursor so it can change.
+      // Reset the cursor so it can change later.
       this.cursor = "";
 
       // Go to the next screen when the song has moved passed the end of this page.
@@ -308,15 +308,13 @@ export default {
         this.pageStart = this.song.tick;
       }
 
-      // Draw notes
       // Use translate() to shift the coordinate grid a bit during rendering.
-      // Simplified drawNotes() since it can assume (0, 0) is where it should start working from.
+      // Simplifies drawNotes() since it can assume (0, 0) is where it should start working from.
       this.ctx.save();
       this.ctx.translate(0, ROW_HEIGHT); // shifts coordinate grid up 1 row
       this.drawNotes(time);
       this.ctx.restore();
 
-      // Draw other things
       this.drawSeeker();
 
       // Scrollbar should only be drawn if the entire song does not fit on a single screen.
@@ -334,9 +332,8 @@ export default {
 <style scoped>
 canvas {
   width: 100%;
-  /* 200px is roughly size of layer list */
-  max-width: calc(100vw - 200px);
   height: 100%;
+  display: block;
   /* a 1x64 repeating background image that matches the colors used in the layer list */
   background-image: url("../assets/canvasbackground.jpg");
 }
