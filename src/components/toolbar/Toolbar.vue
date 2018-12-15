@@ -50,26 +50,23 @@
 </template>
 
 <script>
-import sharedState from "@/state.js";
-import { Song } from "@/NBS.js";
+import * as NBS from "@/NBS.js";
 
 export default {
+  props: {
+    song: NBS.Song,
+    options: Object,
+  },
+  data() {
+    return {
+      
+    };
+  },
   computed: {
-    song() {
-      return sharedState.song;
-    },
-    options() {
-      return sharedState.options;
-    },
-    overlays() {
-      return sharedState.overlays;
-    },
     formattedVolume() {
-      // convert 0-1 to 0-100 and remove decimals
       return (this.options.volume * 100).toFixed(0);
     },
   },
-
   methods: {
     /**
      * Pauses the song
@@ -94,13 +91,13 @@ export default {
      * Opens the settings menu
      */
     openSettings() {
-      this.overlays.settings.visible = true;
+      this.$parent.$refs.settingsOverlay.show();
     },
     /**
      * Opens the song information overlay
      */
     openInfo() {
-      this.overlays.info.visible = true;
+      this.$parent.$refs.songDetailsOverlay.show();
     },
     /**
      * Loads a file from a "change" event on a file input
@@ -108,24 +105,18 @@ export default {
     loadFile(e) {
       this.pause();
       const file = e.target.files[0];
-      sharedState.loadFile(file);
+      this.$parent.loadFile(file);
     },
-    /**
-     * Creates a new song
-     */
     newSong() {
-      sharedState.song = Song.new();
+      this.$parent.song = NBS.Song.new();
     },
-    /**
-     * Saves the current song to the user's computer
-     */
     save() {
-      const buffer = Song.toArrayBuffer(this.song);
+      const buffer = NBS.Song.toArrayBuffer(this.song);
       const array = new Uint8Array(buffer);
       const blob = new Blob([buffer], {
         type: "application/octet-stream",
       });
-      const url = URL.createObjectURL(blob);
+      var url = URL.createObjectURL(blob);
 
       // Create a link and click on it automatically.
       // This is dirty and probably won't work in some browsers.
@@ -150,8 +141,8 @@ export default {
   border: 1px solid transparent;
   border-radius: 3px;
   display: inline-block;
-  width: 20px;
-  height: 20px;
+  width: calc(10px + 1vh);
+  height: calc(10px + 1vh);
   padding: 2px;
   margin: 2px;
   text-decoration: none;
@@ -167,8 +158,8 @@ export default {
   background-image: linear-gradient(#ccc, #aaa);
 }
 .button-image {
-  width: 20px;
-  height: 20px;
+  width: 100%;
+  height: 100%;
 }
 
 .volume:hover {

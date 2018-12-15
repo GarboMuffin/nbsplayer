@@ -11,15 +11,14 @@
 </template>
 
 <script>
-import sharedState from "@/state.js";
+import * as NBS from "@/NBS.js";
 
 export default {
   inject: ["hide"],
-
+  props: {
+    song: NBS.Song,
+  },
   computed: {
-    song() {
-      return sharedState.song;
-    },
     title() {
       return this.song.name || "Unnamed Song";
     },

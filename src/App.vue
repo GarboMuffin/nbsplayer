@@ -2,68 +2,99 @@
   <div id="app">
 
     <!-- Overlays -->
-    <overlay dismissable :overlay="overlays.welcome">
+    <overlay :visible="showWelcome" ref="welcomeOverlay" dismissable>
       <welcome-overlay></welcome-overlay>
     </overlay>
 
-    <overlay :overlay="overlays.loading">
+    <overlay :visible="loading">
       <loading-overlay></loading-overlay>
     </overlay>
 
-    <overlay dismissable :overlay="overlays.info">
-      <song-details-overlay></song-details-overlay>
+    <overlay ref="songDetailsOverlay" dismissable>
+      <song-details-overlay :song="song"></song-details-overlay>
     </overlay>
 
-    <overlay dismissable :overlay="overlays.settings">
-      <settings-overlay></settings-overlay>
+    <overlay ref="settingsOverlay" dismissable>
+      <settings-overlay :options="options"></settings-overlay>
     </overlay>
 
     <!-- Core Interface -->
+    <div id="main" class="flex flex-column">
+      <toolbar :song="song" :options="options"></toolbar>
 
-    <div id="main-container">
-      <toolbar id="toolbar"></toolbar>
-      <div id="middle">
-        <layer-list id="layer-list"></layer-list>
-        <note-canvas ref="canvas"></note-canvas>
+      <div class="flex flex-row" id="middle">
+        <div id="layer-list" class="flex flex-column">
+          <time-box :song="song"></time-box>
+          <layer-meta :layer="layer" :key="layer.id" v-for="layer in song.layers"></layer-meta>
+          <!-- parenthesis after addLayer are required due to classes being weird about `this` -->
+          <button @click="song.addLayer()" class="row">+ layer</button>
+        </div>
+
+        <div id="canvas-container">
+          <note-canvas :song="song" ref="canvas"></note-canvas>
+        </div>
       </div>
     </div>
+
   </div>
 </template>
 
 <script>
 import * as NBS from "./NBS.js";
 import { audioContext, audioDestination } from "./audio.js";
-import sharedState from "./state.js";
-
+import NoteCanvas from "./components/NoteCanvas.vue";
+import LayerMeta from "./components/LayerMeta.vue";
+import TimeBox from "./components/TimeBox.vue";
 import Overlay from "./components/overlays/Overlay.vue";
 import LoadingOverlay from "./components/overlays/LoadingOverlay.vue";
 import WelcomeOverlay from "./components/overlays/WelcomeOverlay.vue";
 import SettingsOverlay from "./components/overlays/SettingsOverlay.vue";
 import SongDetailsOverlay from "./components/overlays/SongDetailsOverlay.vue";
 import Toolbar from "./components/toolbar/Toolbar.vue";
-import LayerList from "./components/layers/LayerList.vue";
-import NoteCanvas from "./components/NoteCanvas.vue";
-
-window.sharedState = sharedState;
 
 export default {
   components: {
+    NoteCanvas,
+    LayerMeta,
     Overlay,
     LoadingOverlay,
     WelcomeOverlay,
     SettingsOverlay,
     SongDetailsOverlay,
+    TimeBox,
     Toolbar,
-    LayerList,
-    NoteCanvas,
   },
 
   data() {
     return {
+      loading: true,
+      showWelcome: false,
+      song: NBS.Song.new(),
       previousTime: -1,
       lastPlayedTick: -1,
-      sharedState,
+      options: {
+        keyOffset: 45,
+        loop: false,
+        volume: 1,
+      },
     };
+  },
+
+  provide() {
+    return {
+      loadFile: this.loadFile,
+    };
+  },
+
+  mounted() {
+    // Load builtin instruments and other assets
+    const instruments = NBS.Instrument.builtin;
+    Promise.all(instruments.map((i) => i.load()))
+      .then(() => {
+        this.loading = false;
+        this.showWelcome = true;
+        requestAnimationFrame((time) => this.tick(time));
+      });
   },
 
   watch: {
@@ -72,32 +103,39 @@ export default {
     },
   },
 
-  mounted() {
-    // Load builtin instruments and other assets
-    const instruments = NBS.Instrument.builtin;
-    Promise.all(instruments.map((i) => i.load()))
-      .then(() => {
-        this.overlays.loading.visible = false;
-        this.overlays.welcome.visible = true;
-        requestAnimationFrame(this.tick);
-      });
-  },
-
-  computed: {
-    song() {
-      return sharedState.song;
-    },
-    options() {
-      return sharedState.options;
-    },
-    overlays() {
-      return sharedState.overlays;
-    },
-  },
-
   methods: {
     /**
-     * Plays a note.
+     * Loads a file as the current song.
+     */
+    loadFile(file) {
+      this.loading = true;
+
+      // Load the file as an arraybuffer so we can really operate on it.
+      const fileReader = new FileReader();
+      fileReader.readAsArrayBuffer(file);
+
+      // Promise wrapper so other functions can know if/when the loading finishes.
+      return new Promise((resolve, reject) => {
+        fileReader.onload = (e) => {
+          try {
+            var song = NBS.Song.fromArrayBuffer(e.target.result);
+          } catch (e) {
+            reject(e);
+            return;
+          }
+          this.song = song;
+          this.loading = false;
+          if (song.name || song.author || song.originalAuthor || song.description) {
+            this.$refs.songDetailsOverlay.show();
+          }
+          resolve(song);
+        };
+        fileReader.onerror = (err) => reject(err);
+      });
+    },
+
+    /**
+     * Plays a note given its layer.
      */
     playNote(note, layer) {
       // Determine the playbackRate using the key
@@ -163,7 +201,7 @@ export default {
      * Global frame loop. Constantly called with requestAnimationFrame()
      */
     tick(time) {
-      requestAnimationFrame(this.tick);
+      requestAnimationFrame((time) => this.tick(time));
 
       // Determine the amount of time that has passed, up to 500 ms
       // If the time is above 500 ms then most likely the timer stopped for a bit (tabbed out, or something)
@@ -200,12 +238,10 @@ a:hover {
 
 /* Hide spinners on some numer inputs */
 .no-spinners {
-  /* firefox */
   -moz-appearance: textfield;
 }
 .no-spinners::-webkit-outer-spin-button,
 .no-spinners::-webkit-inner-spin-button {
-  /* webkit */
   -webkit-appearance: none;
   margin: 0;
 }
@@ -225,29 +261,34 @@ a:hover {
 .flex-center {
   align-items: center;
 }
-
-#main-container {
-  display: grid;
-  width: 100vw;
-  height: 100vh;
-  grid-template-rows: 30px auto;
-  grid-template-columns: auto;
+/* Aligning text */
+.align-left {
+  text-align: left;
+}
+.align-right {
+  text-align: right;
+}
+.align-center {
+  text-align: center;
 }
 
-#toolbar {
+#main {
+  width: 100vw;
+}
+#layer-list {
+  height: 100%;
+  border-right: 1px solid #777;
+}
+#layer-list > .row {
+  height: 32px;
+  width: 200px;
+}
+#middle {
+  border-top: 1px solid #777;
   border-bottom: 1px solid #777;
 }
-
-#middle {
-  display: grid;
-  width: 100vw;
-  grid-template-rows: auto;
-  grid-template-columns: 200px auto;
-  overflow-y: scroll;
-  background-image: url("assets/layersbackground.jpg");
-}
-
-#layer-list {
-  border-right: 1px solid #777;
+#canvas-container {
+  width: 100%;
+  max-height: 100%;
 }
 </style>

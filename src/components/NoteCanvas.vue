@@ -8,7 +8,7 @@
 </template>
 
 <script>
-import sharedState from "@/state.js";
+import * as NBS from "../NBS.js";
 
 const ROW_HEIGHT = 32;
 const NOTE_SIZE = 32;
@@ -27,6 +27,9 @@ const KEY_TEXT = [
 ];
 
 export default {
+  props: {
+    song: NBS.Song,
+  },
   data() {
     return {
       canvas: null,
@@ -65,9 +68,6 @@ export default {
     visibleLayers() {
       const maxVisibleLayers = Math.ceil(this.canvas.height / ROW_HEIGHT);
       return Math.min(this.song.layers.length, maxVisibleLayers);
-    },
-    song() {
-      return sharedState.song;
     },
   },
 
@@ -288,9 +288,10 @@ export default {
      * Draws the canvas.
      */
     draw(time) {
-      const boundingRect = this.canvas.getBoundingClientRect();
-      this.canvas.width = boundingRect.width;
-      this.canvas.height = boundingRect.height;
+      // 1 row for each layer + 2 for rows for top and bottom
+      const rows = this.song.layers.length + 2;
+      this.canvas.height = rows * ROW_HEIGHT;
+      this.canvas.width = parseInt(window.getComputedStyle(this.canvas).width);
 
       // Reset canvas
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -332,5 +333,8 @@ export default {
 canvas {
   width: 100%;
   height: 100%;
+  display: block;
+  /* a 1x64 repeating background image that matches the colors used in the layer list */
+  background-image: url("../assets/canvasbackground.jpg");
 }
 </style>
