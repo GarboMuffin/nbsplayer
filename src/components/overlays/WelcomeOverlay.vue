@@ -24,15 +24,15 @@
 </template>
 
 <script>
+import sharedState from "@/state.js";
 import * as NBS from "../../NBS.js";
 
 export default {
-  inject: ["hide", "loadFile"],
+  inject: ["hide"],
   methods: {
     inputFile(event) {
       const file = event.target.files[0];
-      this.loadFile(file)
-        .then(() => this.hide());
+      sharedState.loadFile(file).then(() => this.hide());
     },
     newSong() {
       this.$parent.song = NBS.Song.new();

@@ -1,6 +1,6 @@
 <template>
   <div class="row flex flex-row timebox">
-    <div class="align-right">
+    <div class="times">
       <div class="current">{{ currentTime }}</div>
       <div class="end">{{ endTime }}</div>
     </div>
@@ -14,16 +14,17 @@
 
 <script>
 import * as NBS from "@/NBS.js";
+import sharedState from "@/state.js";
 
 const VANILLA_FRIENDLY_TEMPOS = [
   2.5, 5, 10,
 ];
 
 export default {
-  props: {
-    song: NBS.Song,
-  },
   computed: {
+    song() {
+      return sharedState.song;
+    },
     currentTime() {
       return this.formatTime(this.song.currentTime);
     },
@@ -36,12 +37,18 @@ export default {
   },
   methods: {
     formatTime(ms) {
+      const isNegative = ms < 0;
+      ms = Math.abs(ms);
       const time = ms / 1000;
       const hours = Math.floor(time / 3600).toString().padStart(2, "0");
       const minutes = Math.floor(time / 60 % 60).toString().padStart(2, "0");
       const seconds = Math.floor(time % 60).toString().padStart(2, "0");
       const millis = Math.floor(ms % 1000).toString().padStart(3, "0");
-      return `${hours}:${minutes}:${seconds}.${millis}`;
+      const formatted = `${hours}:${minutes}:${seconds}.${millis}`;
+      if (isNegative) {
+        return "-" + formatted;
+      }
+      return formatted;
     },
     focusTempo() {
       this.$refs.tempo.focus();
@@ -58,12 +65,17 @@ export default {
 .timebox > * {
   padding-right: 10px;
 }
+
+.times {
+  text-align: right;
+}
 .current {
   font-weight: bold;
 }
 .end {
   font-size: 11px;
 }
+
 .tempo-container {
   border: 1px solid black;
   cursor: text;

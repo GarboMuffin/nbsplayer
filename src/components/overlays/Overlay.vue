@@ -1,5 +1,5 @@
 <template>
-  <div class="overlay-container" v-if="computedVisible" @click.self="dismiss">
+  <div class="overlay-container" v-show="overlay.visible" @click.self="dismiss">
     <div class="overlay">
       <slot></slot>
     </div>
@@ -9,13 +9,12 @@
 <script>
 export default {
   props: {
-    visible: Boolean,
+    overlay: Object,
   },
 
   data() {
     return {
-      forcedVisible: null,
-      dismissable: false,
+      dismissable: "dismissable" in this.$attrs,
     };
   },
 
@@ -27,33 +26,24 @@ export default {
     };
   },
 
-  mounted() {
-    if ("dismissable" in this.$attrs) {
-      this.dismissable = true;
-    }
-  },
-
-  watch: {
-    visible() {
-      this.forcedVisible = null;
-    },
-  },
-  computed: {
-    computedVisible() {
-      if (this.forcedVisible !== null) {
-        return this.forcedVisible;
-      }
-      return this.visible;
-    }
-  },
-
   methods: {
+    /**
+     * Hides the overlay.
+     */
     hide() {
-      this.forcedVisible = false;
+      this.overlay.visible = false;
     },
+
+    /**
+     * Shows the overlay.
+     */
     show() {
-      this.forcedVisible = true;
+      this.overlay.visible = true;
     },
+
+    /**
+     * Dismisses (hides) the overlay if this is a dismissable overlay.
+     */
     dismiss() {
       if (this.dismissable) {
         this.hide();

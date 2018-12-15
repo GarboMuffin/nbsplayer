@@ -7,11 +7,15 @@
 </template>
 
 <script>
+import sharedState from "@/state.js";
+
 export default {
   inject: ["hide"],
-  props: {
-    options: Object,
-  },
+  computed: {
+    options() {
+      return sharedState.options;
+    }
+  }
 }
 </script>
 
