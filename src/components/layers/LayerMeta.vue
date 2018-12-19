@@ -11,7 +11,7 @@
 </template>
 
 <script>
-import * as NBS from "../NBS.js";
+import * as NBS from "@/NBS.js";
 
 export default {
   props: {
@@ -21,9 +21,6 @@ export default {
 </script>
 
 <style scoped>
-.layer:nth-of-type(even) {
-  background-color: #EEE;
-}
 input {
   font-size: 11px;
 }

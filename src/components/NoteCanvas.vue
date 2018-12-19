@@ -23,7 +23,7 @@ const SCROLLBAR_ACTIVE_COLOR = "#555";
 const SCROLLBAR_HOVER_COLOR = "#666";
 
 const KEY_TEXT = [
-  "A-", "A#", "B-", "C-", "C#", "D-", "D#", "E-", "F-", "F#", "G-", "G#",
+  "A#", "B-", "C-", "C#", "D-", "D#", "E-", "F-", "F#", "G-", "G#", "A-",
 ];
 
 export default {
@@ -32,10 +32,25 @@ export default {
   },
   data() {
     return {
+      /**
+       * The canvas used for rendering
+       */
       canvas: null,
+      /**
+       * The canvas rendering context.
+       */
       ctx: null,
+      /**
+       * Cache for note textures. Maps a texture ID to the texture.
+       */
       textureCache: new Map(),
+      /**
+       * The cursor to display on the canvas. Updated every frame.
+       */
       cursor: "",
+      /**
+       * The mouse's position and state.
+       */
       mouse: {
         x: 0,
         y: 0,
@@ -43,13 +58,39 @@ export default {
         left: false,
         middle: false,
       },
+      /**
+       * The start of the current page. In ticks, should never have decimals.
+       */
       pageStart: 0,
+      /**
+       * The bounding rect of the canvas element.
+       * Updated every frame.
+       */
+      boundingRects: {
+        x: 0,
+        y: 0,
+        height: 0,
+        width: 0,
+        top: 0,
+        right: 0,
+        left: 0,
+        bottom: 0,
+      },
+      /**
+       * Whether or not the seeker is being dragged.
+       */
       draggingSeeker: false,
+      /**
+       * Whether or not the scrollbar is being dragged.
+       */
       draggingScrollbar: false,
     };
   },
 
   computed: {
+    /**
+     * The end of the current page, in ticks. May have decimals.
+     */
     pageEnd: {
       cache: false,
       get() {
@@ -74,9 +115,7 @@ export default {
   mounted() {
     this.canvas = this.$refs.canvas;
     this.ctx = this.canvas.getContext("2d");
-    if (!this.ctx) {
-      alert("Failed to get a 2d canvas rendering context.");
-    }
+    // TODO: WebGL?
   },
 
   methods: {
@@ -97,10 +136,8 @@ export default {
         const prevX = this.mouse.x;
         const prevY = this.mouse.y;
 
-        // TODO: cache bounds and only calculate once?
-        const bounds = this.canvas.getBoundingClientRect();
-        this.mouse.x = e.clientX - bounds.left;
-        this.mouse.y = e.clientY - bounds.top;
+        this.mouse.x = e.clientX - this.boundingRects.left;
+        this.mouse.y = e.clientY - this.boundingRects.top;
 
         // Scrollbar movements are prioritized over seeker movements, etc.
         if (this.draggingScrollbar) {
@@ -227,8 +264,8 @@ export default {
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
 
-        const keyText = KEY_TEXT[key % 12];
-        const octave = Math.floor(key / 12) + 1;
+        const keyText = KEY_TEXT[(key - 1) % 12];
+        const octave = Math.floor((key - 1) / 12) + 1;
         const text = keyText + octave.toString();
         ctx.fillText(text, NOTE_SIZE / 2, NOTE_SIZE / 2);
 
@@ -242,10 +279,20 @@ export default {
       const pageEnd = this.pageEnd;
 
       // The note rendering loop loops through all the layers, and then through each note we need to draw.
-      // `for (... of ...)` loops are not used because the index is required for coordinate calculations.
       for (let l = 0; l < visibleLayers; l++) {
         const layer = this.song.layers[l];
+
+        // Skip rows which do not contain enough notes to be rendered at this point
+        if (layer.notes.length < pageStart) {
+          continue;
+        }
+
         const y = l * ROW_HEIGHT;
+
+        // Skip rows in which we know that they will be offscreen
+        if (Math.abs(this.boundingRects.y) - NOTE_SIZE > y || this.boundingRects.y + this.boundingRects.height + NOTE_SIZE < y) {
+          continue;
+        }
 
         for (let t = pageStart; t < pageEnd; t++) {
           const x = (t - pageStart) * NOTE_SIZE;
@@ -288,13 +335,18 @@ export default {
      * Draws the canvas.
      */
     draw(time) {
-      // 1 row for each layer + 2 for rows for top and bottom
-      const rows = this.song.layers.length + 2;
-      this.canvas.height = rows * ROW_HEIGHT;
-      this.canvas.width = parseInt(window.getComputedStyle(this.canvas).width);
+      // Temporary and dirty hack to handhold browser other than firefox and seem to behave differently
+      // when it comes to what `height: 100%` means
+      if (!navigator.userAgent.includes("Firefox")) {
+        const rows = this.song.layers.length + 2;
+        this.canvas.style.height = (rows * ROW_HEIGHT) + "px";
+      }
 
-      // Reset canvas
-      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      const boundingClientRect = this.canvas.getBoundingClientRect();
+      this.canvas.height = boundingClientRect.height;
+      this.canvas.width = boundingClientRect.width;
+      this.boundingRects = boundingClientRect;
+
       // Reset the cursor so it can change later.
       this.cursor = "";
 
@@ -334,7 +386,5 @@ canvas {
   width: 100%;
   height: 100%;
   display: block;
-  /* a 1x64 repeating background image that matches the colors used in the layer list */
-  background-image: url("../assets/canvasbackground.jpg");
 }
 </style>

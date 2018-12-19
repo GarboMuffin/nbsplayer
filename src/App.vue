@@ -19,20 +19,11 @@
     </overlay>
 
     <!-- Core Interface -->
-    <div id="main" class="flex flex-column">
-      <toolbar :song="song" :options="options"></toolbar>
-
-      <div class="flex flex-row" id="middle">
-        <div id="layer-list" class="flex flex-column">
-          <time-box :song="song"></time-box>
-          <layer-meta :layer="layer" :key="layer.id" v-for="layer in song.layers"></layer-meta>
-          <!-- parenthesis after addLayer are required due to classes being weird about `this` -->
-          <button @click="song.addLayer()" class="row">+ layer</button>
-        </div>
-
-        <div id="canvas-container">
-          <note-canvas :song="song" ref="canvas"></note-canvas>
-        </div>
+    <div id="main">
+      <toolbar :song="song" :options="options" id="toolbar"></toolbar>
+      <div id="middle">
+        <layer-list :song="song" id="layer-list"></layer-list>
+        <note-canvas :song="song" ref="canvas" id="note-canvas"></note-canvas>
       </div>
     </div>
 
@@ -43,8 +34,7 @@
 import * as NBS from "./NBS.js";
 import { audioContext, audioDestination } from "./audio.js";
 import NoteCanvas from "./components/NoteCanvas.vue";
-import LayerMeta from "./components/LayerMeta.vue";
-import TimeBox from "./components/TimeBox.vue";
+import LayerList from "./components/layers/LayerList.vue";
 import Overlay from "./components/overlays/Overlay.vue";
 import LoadingOverlay from "./components/overlays/LoadingOverlay.vue";
 import WelcomeOverlay from "./components/overlays/WelcomeOverlay.vue";
@@ -55,14 +45,13 @@ import Toolbar from "./components/toolbar/Toolbar.vue";
 export default {
   components: {
     NoteCanvas,
-    LayerMeta,
     Overlay,
     LoadingOverlay,
     WelcomeOverlay,
     SettingsOverlay,
     SongDetailsOverlay,
-    TimeBox,
     Toolbar,
+    LayerList,
   },
 
   data() {
@@ -261,34 +250,27 @@ a:hover {
 .flex-center {
   align-items: center;
 }
-/* Aligning text */
-.align-left {
-  text-align: left;
-}
-.align-right {
-  text-align: right;
-}
-.align-center {
-  text-align: center;
-}
 
 #main {
+  display: grid;
   width: 100vw;
+  height: 100vh;
+  grid-template-rows: 30px auto;
+  grid-template-columns: auto;
 }
 #layer-list {
-  height: 100%;
   border-right: 1px solid #777;
 }
-#layer-list > .row {
-  height: 32px;
-  width: 200px;
-}
-#middle {
-  border-top: 1px solid #777;
+#toolbar {
   border-bottom: 1px solid #777;
 }
-#canvas-container {
-  width: 100%;
-  max-height: 100%;
+#middle {
+  display: grid;
+  width: 100vw;
+  grid-template-rows: auto;
+  grid-template-columns: 200px auto;
+  overflow-y: auto;
+  background-image: url("assets/layersbackground.jpg");
+  background-attachment: local;
 }
 </style>

@@ -71,7 +71,7 @@ export default {
   width: 100%;
   height: 100%;
   z-index: 10;
-  background-color: #0004;
+  background-color: rgba(0, 0, 0, 0.3);
 }
 
 .overlay {
