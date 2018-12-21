@@ -5,6 +5,7 @@
       <div><small>Note Block Studio as a website.</small></div>
       <div><small>Editing will be supported soon.</small></div>
     </div>
+
     <div class="actions section">
       <div class="load-song button flex flex-row flex-center">
         <font-awesome-icon icon="folder-open" fixed-width size="2x"></font-awesome-icon>
@@ -24,21 +25,22 @@
 </template>
 
 <script>
-import * as NBS from "../../NBS.js";
+import { Song } from "../../NBS.js";
+import { state } from "@/state.js";
 
 export default {
-  inject: ["hide", "loadFile"],
+  inject: ["hide"],
   methods: {
     inputFile(event) {
       if (event.target.files.length === 0) {
         return;
       }
       const file = event.target.files[0];
-      this.loadFile(file)
+      state.loadFile(file)
         .then(() => this.hide());
     },
     newSong() {
-      this.$parent.song = NBS.Song.new();
+      state.setSong(Song.new());
       this.hide();
     },
   },

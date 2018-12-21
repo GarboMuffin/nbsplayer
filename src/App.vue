@@ -2,28 +2,28 @@
   <div id="app">
 
     <!-- Overlays -->
-    <overlay :visible="showWelcome" ref="welcomeOverlay" dismissable>
+    <overlay :visible="state.showWelcome" ref="welcomeOverlay" dismissable>
       <welcome-overlay></welcome-overlay>
     </overlay>
 
-    <overlay :visible="loading">
+    <overlay :visible="state.loading">
       <loading-overlay></loading-overlay>
     </overlay>
 
     <overlay ref="songDetailsOverlay" dismissable>
-      <song-details-overlay :song="song"></song-details-overlay>
+      <song-details-overlay :song="state.song"></song-details-overlay>
     </overlay>
 
     <overlay ref="settingsOverlay" dismissable>
-      <settings-overlay :options="options"></settings-overlay>
+      <settings-overlay :options="state.options"></settings-overlay>
     </overlay>
 
     <!-- Core Interface -->
     <div id="main">
-      <toolbar :song="song" :options="options" id="toolbar"></toolbar>
+      <toolbar id="toolbar"></toolbar>
       <div id="middle">
-        <layer-list :song="song" id="layer-list"></layer-list>
-        <note-canvas :song="song" ref="canvas" id="note-canvas"></note-canvas>
+        <layer-list :song="state.song" id="layer-list"></layer-list>
+        <note-canvas :song="state.song" ref="canvas" id="note-canvas"></note-canvas>
       </div>
     </div>
 
@@ -42,6 +42,8 @@ import SettingsOverlay from "./components/overlays/SettingsOverlay.vue";
 import SongDetailsOverlay from "./components/overlays/SongDetailsOverlay.vue";
 import Toolbar from "./components/toolbar/Toolbar.vue";
 
+import { state } from "@/state.js";
+
 export default {
   components: {
     NoteCanvas,
@@ -56,22 +58,10 @@ export default {
 
   data() {
     return {
-      loading: true,
-      showWelcome: false,
-      song: NBS.Song.new(),
+      state,
       previousTime: -1,
       lastPlayedTick: -1,
-      options: {
-        keyOffset: 45,
-        loop: false,
-        volume: 1,
-      },
-    };
-  },
-
-  provide() {
-    return {
-      loadFile: this.loadFile,
+      nextFrame: 0,
     };
   },
 
@@ -80,55 +70,30 @@ export default {
     const instruments = NBS.Instrument.builtin;
     Promise.all(instruments.map((i) => i.load()))
       .then(() => {
-        this.loading = false;
-        this.showWelcome = true;
+        this.state.loading = false;
+        this.state.showWelcome = true;
         requestAnimationFrame((time) => this.tick(time));
       });
   },
 
+  beforeDestroy() {
+    // Stop the frame loop if the app is unmounted for whatever reason.
+    cancelAnimationFrame(this.nextFrame);
+  },
+
   watch: {
-    "options.volume"(volume) {
+    "state.options.volume"(volume) {
       audioDestination.gain.value = volume;
     },
   },
 
   methods: {
     /**
-     * Loads a file as the current song.
-     */
-    loadFile(file) {
-      this.loading = true;
-
-      // Load the file as an arraybuffer so we can really operate on it.
-      const fileReader = new FileReader();
-      fileReader.readAsArrayBuffer(file);
-
-      // Promise wrapper so other functions can know if/when the loading finishes.
-      return new Promise((resolve, reject) => {
-        fileReader.onload = (e) => {
-          try {
-            var song = NBS.Song.fromArrayBuffer(e.target.result);
-          } catch (e) {
-            reject(e);
-            return;
-          }
-          this.song = song;
-          this.loading = false;
-          if (song.name || song.author || song.originalAuthor || song.description) {
-            this.$refs.songDetailsOverlay.show();
-          }
-          resolve(song);
-        };
-        fileReader.onerror = (err) => reject(err);
-      });
-    },
-
-    /**
      * Plays a note given its layer.
      */
     playNote(note, layer) {
       // Determine the playbackRate using the key
-      const keyChange = note.key - this.options.keyOffset;
+      const keyChange = note.key - this.state.options.keyOffset;
       const playbackRate = 2 ** (keyChange / 12);
 
       // Create an audio source using the instrument's buffer
@@ -154,31 +119,33 @@ export default {
      * Advanced the song forward.
      */
     advanceSong(time, timePassed) {
-      if (this.song.paused) {
+      const song = this.state.song;
+
+      if (song.paused) {
         return;
       }
 
       // Handle the song ending.
-      if (this.song.currentTick >= this.song.size) {
-        if (this.options.loop) {
-          this.song.currentTick = 0;
+      if (song.currentTick >= song.size) {
+        if (this.state.options.loop) {
+          song.currentTick = 0;
         } else {
-          this.song.paused = true;
+          song.paused = true;
         }
         return;
       }
 
-      const ticksPassed = timePassed / this.song.timePerTick;
-      this.song.currentTick += ticksPassed;
+      const ticksPassed = timePassed / song.timePerTick;
+      song.currentTick += ticksPassed;
 
       // song.tick is a getter that uses currenTick, we do not have to manually set it.
-      if (this.song.tick === this.lastPlayedTick) {
+      if (song.tick === this.lastPlayedTick) {
         return;
       }
-      this.lastPlayedTick = this.song.tick;
+      this.lastPlayedTick = song.tick;
 
-      for (const layer of this.song.layers) {
-        const note = layer.notes[this.song.tick];
+      for (const layer of song.layers) {
+        const note = layer.notes[song.tick];
         if (note) {
           this.playNote(note, layer).connect(audioDestination);
           note.lastPlayed = time;
@@ -190,7 +157,7 @@ export default {
      * Global frame loop. Constantly called with requestAnimationFrame()
      */
     tick(time) {
-      requestAnimationFrame((time) => this.tick(time));
+      this.nextFrame = requestAnimationFrame((time) => this.tick(time));
 
       // Determine the amount of time that has passed, up to 500 ms
       // If the time is above 500 ms then most likely the timer stopped for a bit (tabbed out, or something)

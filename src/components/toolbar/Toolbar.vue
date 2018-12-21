@@ -13,23 +13,23 @@
       <input type="file" accept=".nbs" @change="loadFile">
     </a>
 
-    <span class="separator"></span>
+    <div class="separator"></div>
 
-    <a @click="play" :value="!song.paused" class="button" title="Play">
+    <a @click="play" :value="!paused" class="button" title="Play">
       <img class="button-image" src="@/assets/toolbar/play.svg" alt="Play">
     </a>
 
-    <a @click="pause" :value="song.paused" class="button" title="Pause">
+    <a @click="pause" :value="paused" class="button" title="Pause">
       <img class="button-image" src="@/assets/toolbar/pause.svg" alt="Pause">
     </a>
 
-    <a @click="stop" class="button" title="Stop">
+    <a @click="stop" :value="stopped" class="button" title="Stop">
       <img class="button-image" src="@/assets/toolbar/stop.svg" alt="Stop">
     </a>
 
-    <span class="separator"></span>
+    <div class="separator"></div>
 
-    <a @click="options.loop = !options.loop" :value="options.loop" title="Loop" class="button">
+    <a @click="toggleLoop" :value="state.options.loop" title="Loop" class="button">
       <img class="button-image" src="@/assets/toolbar/loop.svg" alt="Loop">
     </a>
 
@@ -43,7 +43,7 @@
 
     <a title="Volume" class="volume button">
       <img class="button-image" src="@/assets/toolbar/volume.svg" alt="Volume">
-      <input type="range" name="volume" v-model.number="options.volume" min="0" max="1" step="0.01">
+      <input type="range" name="volume" v-model.number="state.options.volume" min="0" max="1" step="0.01">
       <span class="volume-amount">{{ formattedVolume }}%</span>
     </a>
   </div>
@@ -51,41 +51,46 @@
 
 <script>
 import * as NBS from "@/NBS.js";
+import { state } from "@/state.js";
 
 export default {
-  props: {
-    song: NBS.Song,
-    options: Object,
-  },
   data() {
     return {
-      
+      state,
     };
   },
+
   computed: {
     formattedVolume() {
-      return (this.options.volume * 100).toFixed(0);
+      return (this.state.options.volume * 100).toFixed(0);
+    },
+    paused() {
+      return this.state.song.paused;
+    },
+    stopped() {
+      return this.paused && this.state.song.currentTime === 0;
     },
   },
+
   methods: {
     /**
      * Pauses the song
      */
     pause() {
-      this.song.pause();
+      this.state.song.pause();
     },
     /**
      * Plays the song
      */
     play() {
-      this.song.play();
+      this.state.song.play();
     },
     /**
      * Stops the song. (pause & return to start)
      */
     stop() {
-      this.song.pause();
-      this.song.currentTick = 0;
+      this.state.song.pause();
+      this.state.song.currentTick = 0;
     },
     /**
      * Opens the settings menu
@@ -100,18 +105,30 @@ export default {
       this.$parent.$refs.songDetailsOverlay.show();
     },
     /**
+     * Toggles the loop option
+     */
+    toggleLoop() {
+      this.state.options.loop = !this.state.options.loop;
+    },
+    /**
      * Loads a file from a "change" event on a file input
      */
     loadFile(e) {
       this.pause();
       const file = e.target.files[0];
-      this.$parent.loadFile(file);
+      state.loadFile(file);
     },
+    /**
+     * Replaces the existing song with a new empty song.
+     */
     newSong() {
-      this.$parent.song = NBS.Song.new();
+      state.setSong(NBS.Song.new());
     },
+    /**
+     * Downloads the song to the user's computer.
+     */
     save() {
-      const buffer = NBS.Song.toArrayBuffer(this.song);
+      const buffer = NBS.Song.toArrayBuffer(this.state.song);
       const array = new Uint8Array(buffer);
       const blob = new Blob([buffer], {
         type: "application/octet-stream",
@@ -122,7 +139,7 @@ export default {
       // This is dirty and probably won't work in some browsers.
       const link = document.createElement("a");
       link.href = url;
-      link.download = (this.song.name || "song") + ".nbs";
+      link.download = (this.state.song.name || "song") + ".nbs";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -170,6 +187,9 @@ export default {
   width: 100px;
   margin: 0 10px;
   padding: 0;
+}
+.volume img {
+  width: initial;
 }
 .volume :not(img) {
   display: none;

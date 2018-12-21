@@ -1,7 +1,7 @@
 import { audioContext } from "./audio.js";
 
 /**
- * JavaScript implementation of .nbs files.
+ * NBS.js: JavaScript implementation of parsing, saving, and abstracting .nbs files.
  */
 
 /**
@@ -416,8 +416,8 @@ Song.fromArrayBuffer = function songFromArrayBuffer(arrayBuffer) {
   song.originalAuthor = readString();
   song.description = readString();
   song.tempo = readShort() / 100; // tempo is stored as real tempo * 100
-  readByte(); // auto save enabled (0/1), unused
-  readByte(); // auto save duration, unused
+  readByte(); // auto save enabled (0/1), unused by nbs.js
+  readByte(); // auto save duration in minutes, unused by nbs.js
   song.timeSignature = readByte();
   song.minutesSpent = readInt();
   song.leftClicks = readInt();
