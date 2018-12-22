@@ -289,10 +289,11 @@ export default {
 
         const y = l * ROW_HEIGHT;
 
+        // TODO: fix layer culling
         // Skip rows in which we know that they will be offscreen
-        if (Math.abs(this.boundingRects.y) - NOTE_SIZE > y || this.boundingRects.y + this.boundingRects.height + NOTE_SIZE < y) {
-          continue;
-        }
+        // if (Math.abs(this.boundingRects.y) - NOTE_SIZE > y || this.boundingRects.y + this.boundingRects.height + NOTE_SIZE < y) {
+        //  continue;
+        // }
 
         for (let t = pageStart; t < pageEnd; t++) {
           const x = (t - pageStart) * NOTE_SIZE;
