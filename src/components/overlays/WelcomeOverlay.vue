@@ -3,7 +3,8 @@
     <div class="about section">
       <h1>nbsplayer</h1>
       <div><small>Note Block Studio as a website.</small></div>
-      <div><small>Editing will be supported soon.</small></div>
+      <div><small>Basic editing probably coming before 2019.</small></div>
+      <div><small>Note sounds and textures are owned by Mojang.</small></div>
     </div>
 
     <div class="actions section">
