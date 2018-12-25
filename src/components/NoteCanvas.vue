@@ -9,6 +9,7 @@
 
 <script>
 import * as NBS from "../NBS.js";
+import { SongEditor } from "@/editor.js";
 
 const ROW_HEIGHT = 32;
 const NOTE_SIZE = 32;
@@ -22,14 +23,12 @@ const SCROLLBAR_INACTIVE_COLOR = "#777";
 const SCROLLBAR_ACTIVE_COLOR = "#555";
 const SCROLLBAR_HOVER_COLOR = "#666";
 
-const KEY_TEXT = [
-  "A#", "B-", "C-", "C#", "D-", "D#", "E-", "F-", "F#", "G-", "G#", "A-",
-];
-
 export default {
   props: {
+    editor: SongEditor,
     song: NBS.Song,
   },
+
   data() {
     return {
       /**
@@ -124,12 +123,27 @@ export default {
     handleMouse(e) {
       if (e.type === "mouseup" || e.type === "mousedown") {
         const isDown = e.type === "mousedown";
+        const currentTick = Math.floor(this.mouse.x / NOTE_SIZE) + this.pageStart;
+        const currentLayer = Math.floor(this.mouse.y / NOTE_SIZE) - 1;
         if (e.button === 0) {
           this.mouse.left = isDown;
+          if (isDown) {
+            this.editor.placeNote(currentLayer, currentTick);
+          }
         } else if (e.button === 1) {
           this.mouse.middle = isDown;
+          if (isDown) {
+            const note = this.editor.getNote(currentLayer, currentTick);
+            if (note) {
+              this.editor.currentKey = note.key;
+              this.editor.currentInstrument = note.instrument;
+            }
+          }
         } else if (e.button === 2) {
           this.mouse.right = isDown;
+          if (isDown) {
+            this.editor.deleteNote(currentLayer, currentTick);
+          }
         }
       } else if (e.type === "mousemove") {
         const prevX = this.mouse.x;
@@ -138,7 +152,6 @@ export default {
         this.mouse.x = e.clientX - this.boundingRects.left;
         this.mouse.y = e.clientY - this.boundingRects.top;
 
-        // Scrollbar movements are prioritized over seeker movements, etc.
         if (this.draggingScrollbar) {
           this.dragScrollbar(prevX, this.mouse.x);
         } else if (this.draggingSeeker) {
@@ -263,9 +276,7 @@ export default {
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
 
-        const keyText = KEY_TEXT[(key - 1) % 12];
-        const octave = Math.floor((key - 1) / 12) + 1;
-        const text = keyText + octave.toString();
+        const text = this.editor.formatKey(key);
         ctx.fillText(text, NOTE_SIZE / 2, NOTE_SIZE / 2);
 
         return canvas;

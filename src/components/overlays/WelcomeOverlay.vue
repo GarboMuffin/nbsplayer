@@ -3,7 +3,7 @@
     <div class="about section">
       <h1>nbsplayer</h1>
       <div><small>Note Block Studio as a website.</small></div>
-      <div><small>Editing will be supported soon.</small></div>
+      <div><small>Now with very basic editing. More soon.</small></div>
     </div>
 
     <div class="actions section">

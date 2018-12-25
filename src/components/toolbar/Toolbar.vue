@@ -46,6 +46,18 @@
       <input type="range" name="volume" v-model.number="state.options.volume" min="0" max="1" step="0.01">
       <span class="volume-amount">{{ formattedVolume }}%</span>
     </a>
+
+    <div class="separator"></div>
+
+    <a
+      title="Set Instrument"
+      class="button"
+      @click="state.editor.currentInstrument = instrument"
+      :value="state.editor.currentInstrument === instrument"
+      :key="instrument.id"
+      v-for="instrument in state.song.instruments">
+      {{ instrument.id }}
+    </a>
   </div>
 </template>
 

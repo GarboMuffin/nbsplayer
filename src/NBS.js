@@ -76,6 +76,10 @@ export class Song {
      * The name of the MIDI or schematic that this song was imported from.
      */
     this.midiName = "";
+    /**
+     * The instruments of the song.
+     */
+    this.instruments = Instrument.builtin;
   }
 
   /**
@@ -479,7 +483,7 @@ Song.fromArrayBuffer = function songFromArrayBuffer(arrayBuffer) {
     const layer = song.layers[rn.layer];
     const key = rn.key;
     const tick = rn.tick;
-    const instrument = Instrument.builtin[rn.instrument];
+    const instrument = song.instruments[rn.instrument];
 
     layer.setNote(tick, key, instrument);
   }

@@ -23,7 +23,7 @@
       <toolbar id="toolbar"></toolbar>
       <div id="middle">
         <layer-list :song="state.song" id="layer-list"></layer-list>
-        <note-canvas :song="state.song" ref="canvas" id="note-canvas"></note-canvas>
+        <note-canvas :song="state.song" :editor="state.editor" ref="canvas" id="note-canvas"></note-canvas>
       </div>
     </div>
 

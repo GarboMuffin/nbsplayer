@@ -1,6 +1,7 @@
 import Vue from "vue";
 import { Song } from "./NBS.js";
 import { audioDestination } from "./audio.js";
+import { SongEditor } from "./editor.js";
 
 /**
  * Global shared state.
@@ -10,7 +11,7 @@ export const state = new Vue({
   // I found Vuex to be very clumsy with little to no gain.
 
   data() {
-    return {
+    const data = {
       /**
        * Is something still loading?
        */
@@ -19,6 +20,10 @@ export const state = new Vue({
        * Currently loaded song
        */
       song: Song.new(),
+      /**
+       * Allows you to edit the song.
+       */
+      editor: null,
       /**
        * Show the welcome message?
        */
@@ -49,6 +54,10 @@ export const state = new Vue({
         volume: 1,
       },
     };
+
+    data.editor = new SongEditor(data.song);
+
+    return data;
   },
 
   watch: {
@@ -60,6 +69,7 @@ export const state = new Vue({
   methods: {
     setSong(song) {
       this.song = song;
+      this.editor = new SongEditor(song);
     },
 
     /**
