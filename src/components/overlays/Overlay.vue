@@ -1,7 +1,7 @@
 <!-- TODO: Overlay is very weird, should be refactored. -->
 
 <template>
-  <div class="overlay-container" v-if="computedVisible" @click.self="dismiss">
+  <div class="overlay-container" v-if="visible" @click.self="dismiss">
     <div class="overlay">
       <slot></slot>
     </div>
@@ -11,12 +11,19 @@
 <script>
 export default {
   props: {
-    visible: Boolean,
+    visible: {
+      type: Boolean,
+      default: true,
+    },
+  },
+
+  model: {
+    prop: "visible",
+    event: "visibilityChanged",
   },
 
   data() {
     return {
-      forcedVisible: null,
       dismissable: false,
     };
   },
@@ -35,26 +42,12 @@ export default {
     }
   },
 
-  watch: {
-    visible() {
-      this.forcedVisible = null;
-    },
-  },
-  computed: {
-    computedVisible() {
-      if (this.forcedVisible !== null) {
-        return this.forcedVisible;
-      }
-      return this.visible;
-    }
-  },
-
   methods: {
     hide() {
-      this.forcedVisible = false;
+      this.$emit("visibilityChanged", false);
     },
     show() {
-      this.forcedVisible = true;
+      this.$emit("visibilityChanged", true);
     },
     dismiss() {
       if (this.dismissable) {

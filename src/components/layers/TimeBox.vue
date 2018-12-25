@@ -5,8 +5,9 @@
       <div class="end">{{ endTime }}</div>
     </div>
     <div class="flex flex-center">
-      <div :friendly="isVanillaFriendlyTempo" @click.self="focusTempo" class="tempo-container" title="Tempo in ticks per second">
+      <div :vanilla-friendly="isVanillaFriendlyTempo" @click.self="focusTempo" class="tempo-container" title="Tempo in ticks per second">
         <input ref="tempo" type="number" v-model.number="song.tempo" class="no-spinners" name="tempo" step="0.25">
+        t/s
       </div>
     </div>
   </div>
@@ -23,6 +24,7 @@ export default {
   props: {
     song: NBS.Song,
   },
+
   computed: {
     currentTime() {
       return this.formatTime(this.song.currentTime);
@@ -34,20 +36,21 @@ export default {
       return VANILLA_FRIENDLY_TEMPOS.includes(this.song.tempo);
     }
   },
+
   methods: {
     formatTime(ms) {
-      const isNegative = ms < 0;
       const time = Math.abs(ms) / 1000;
       const hours = Math.floor(time / 3600).toString().padStart(2, "0");
       const minutes = Math.floor(time / 60 % 60).toString().padStart(2, "0");
       const seconds = Math.floor(time % 60).toString().padStart(2, "0");
       const millis = Math.floor(Math.abs(ms) % 1000).toString().padStart(3, "0");
       const formatted = `${hours}:${minutes}:${seconds}.${millis}`;
-      if (isNegative) {
+      if (ms < 0) {
         return "-" + formatted;
       }
       return formatted;
     },
+
     focusTempo() {
       this.$refs.tempo.focus();
     },
@@ -78,11 +81,7 @@ export default {
   border: 1px solid black;
   cursor: text;
 }
-.tempo-container::after {
-  /* ticks/second */
-  content: " t/s";
-}
-.tempo-container:not([friendly]) {
+.tempo-container:not([vanilla-friendly]) {
   background-color: rgb(255, 213, 213);
 }
 input[name="tempo"] {

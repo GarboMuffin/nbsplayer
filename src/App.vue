@@ -2,7 +2,7 @@
   <div id="app">
 
     <!-- Overlays -->
-    <overlay :visible="state.showWelcome" ref="welcomeOverlay" dismissable>
+    <overlay v-model="state.showWelcome" ref="welcomeOverlay" dismissable>
       <welcome-overlay></welcome-overlay>
     </overlay>
 
@@ -10,11 +10,11 @@
       <loading-overlay></loading-overlay>
     </overlay>
 
-    <overlay ref="songDetailsOverlay" dismissable>
+    <overlay v-model="state.showSongDetails" dismissable>
       <song-details-overlay :song="state.song"></song-details-overlay>
     </overlay>
 
-    <overlay ref="settingsOverlay" dismissable>
+    <overlay v-model="state.showSettings" dismissable>
       <settings-overlay :options="state.options"></settings-overlay>
     </overlay>
 
@@ -196,9 +196,6 @@ a:hover {
   margin: 0;
 }
 
-/* Utility Classes */
-
-/* Flex Styles */
 .flex {
   display: flex;
 }
@@ -216,7 +213,7 @@ a:hover {
   display: grid;
   width: 100vw;
   height: 100vh;
-  grid-template-rows: 30px auto;
+  grid-template-rows: 32px auto;
   grid-template-columns: auto;
 }
 #layer-list {

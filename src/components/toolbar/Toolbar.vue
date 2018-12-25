@@ -96,13 +96,13 @@ export default {
      * Opens the settings menu
      */
     openSettings() {
-      this.$parent.$refs.settingsOverlay.show();
+      this.state.showSettings = true;
     },
     /**
      * Opens the song information overlay
      */
     openInfo() {
-      this.$parent.$refs.songDetailsOverlay.show();
+      this.state.showSongDetails = true;
     },
     /**
      * Toggles the loop option
@@ -162,9 +162,9 @@ export default {
   border: 1px solid transparent;
   border-radius: 3px;
   display: inline-block;
-  width: calc(10px + 1vh);
-  height: calc(10px + 1vh);
   padding: 2px;
+  width: 20px;
+  height: 20px;
   margin: 2px;
   text-decoration: none;
 }
@@ -183,6 +183,7 @@ export default {
   height: 100%;
 }
 
+/* Volume Button */
 .volume:hover {
   width: initial;
 }
@@ -202,6 +203,7 @@ export default {
   display: initial;
 }
 
+/* Open Button */
 .open {
   position: relative;
 }

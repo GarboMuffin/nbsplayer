@@ -1,5 +1,6 @@
 import Vue from "vue";
 import { Song } from "./NBS.js";
+import { audioDestination } from "./audio.js";
 
 /**
  * Global shared state.
@@ -22,6 +23,14 @@ export const state = new Vue({
        * Show the welcome message?
        */
       showWelcome: false,
+      /**
+       * Show the song details overlay?
+       */
+      showSongDetails: false,
+      /**
+       * Show the settings overlay?
+       */
+      showSettings: false,
       /**
        * Somewhat-global options.
        */
@@ -75,7 +84,7 @@ export const state = new Vue({
           this.loading = false;
           this.setSong(song);
           if (song.name || song.author || song.originalAuthor || song.description) {
-            this.$refs.songDetailsOverlay.show();
+            this.showSongDetails = true;
           }
           resolve(song);
         };
