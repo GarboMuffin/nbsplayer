@@ -1,5 +1,25 @@
 import { Layer } from "@/NBS";
 
+export class Viewport {
+  constructor() {
+    /**
+     * The first visible tick of the song.
+     * Must *not* have decimals.
+     */
+    this.firstTick = 0;
+  }
+
+  /**
+   * The last visible tick of the song. May have decimals.
+   */
+  get lastTick() {
+    return this.firstTick + this.width;
+  }
+  set lastTick(tick) {
+    this.firstTick = tick - this.width;
+  }
+}
+
 /**
  * Methods related to editing or displaying the notes of a song.
  */
@@ -12,11 +32,15 @@ export class SongEditor {
     /**
      * The currently active key for newly placed notes.
      */
-    this.currentKey = 45;
+    this.currentKey = 45; // F#4
     /**
      * The currently active instrument for newly placed instruments.
      */
     this.currentInstrument = song.instruments[0];
+    /**
+     * The currently visible part of the song.
+     */
+    this.viewport = new Viewport();
   }
 
   /**

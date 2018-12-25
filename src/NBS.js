@@ -229,7 +229,7 @@ export class Note {
     /**
      * The key of the note.
      */
-    this.key = 45;
+    this.key = 45; // F#4
     /**
      * The instrument of the note.
      * TODO: null is not a good default value

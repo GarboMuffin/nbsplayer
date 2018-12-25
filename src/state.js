@@ -43,7 +43,7 @@ export const state = new Vue({
         /**
          * Offset of note key to the actual sound that is played.
          */
-        keyOffset: 45,
+        keyOffset: 45, // F#4
         /**
          * Loop the song
          */

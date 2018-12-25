@@ -16,7 +16,12 @@ export default {
 
   computed: {
     text() {
-      return this.instrument.name.split(" ").map((i) => i[0]).join("");
+      const words = this.instrument.name.split(" ");
+      if (words.length === 1) {
+        return this.instrument.name.substr(0, 2);
+      } else {
+        return words.slice(0, 2).map((i) => i[0]).join("");
+      }
     },
     active() {
       return this.editor.currentInstrument === this.instrument;

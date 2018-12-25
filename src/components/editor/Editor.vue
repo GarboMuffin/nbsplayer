@@ -65,23 +65,10 @@ export default {
         middle: false,
       },
       /**
-       * The start of the current page. In ticks, should never have decimals.
-       */
-      pageStart: 0,
-      /**
        * The bounding rect of the canvas element.
-       * Updated every frame.
+       * Updated at the start of every frame.
        */
-      boundingRects: {
-        x: 0,
-        y: 0,
-        height: 0,
-        width: 0,
-        top: 0,
-        right: 0,
-        left: 0,
-        bottom: 0,
-      },
+      boundingRects: new DOMRect(),
       /**
        * Whether or not the seeker is being dragged.
        */
@@ -94,15 +81,6 @@ export default {
   },
 
   computed: {
-    /**
-     * The end of the current page, in ticks. May have decimals.
-     */
-    pageEnd: {
-      cache: false,
-      get() {
-        return this.pageStart + this.canvas.width / NOTE_SIZE;
-      }
-    },
     /**
      * The amount of ticks that are visible on the canvas.
      */
@@ -130,7 +108,7 @@ export default {
     handleMouse(e) {
       if (e.type === "mouseup" || e.type === "mousedown") {
         const isDown = e.type === "mousedown";
-        const currentTick = Math.floor(this.mouse.x / NOTE_SIZE) + this.pageStart;
+        const currentTick = Math.floor(this.mouse.x / NOTE_SIZE) + this.editor.viewport.firstTick;
         const currentLayer = Math.floor(this.mouse.y / NOTE_SIZE) - 1;
         if (e.button === 0) {
           this.mouse.left = isDown;
@@ -194,8 +172,7 @@ export default {
       const ticksMoved = percentMoved * this.song.size;
       const newTick = this.song.currentTick + ticksMoved;
       this.song.currentTick = newTick;
-      // pageStart cannot have decimals, and start the page 1 before the new current tick.
-      this.pageStart = Math.floor(newTick) - 1;
+      this.editor.viewport.firstTick = Math.floor(newTick) - 1;
       this.song.paused = true;
     },
 
@@ -205,7 +182,7 @@ export default {
      */
     drawSeeker() {
       // the current tick, relative to the current screen.
-      const screenRelativeTick = this.song.currentTick - this.pageStart;
+      const screenRelativeTick = this.song.currentTick - this.editor.viewport.firstTick;
       const x = screenRelativeTick * NOTE_SIZE;
       this.ctx.fillStyle = "#000000";
 
@@ -216,7 +193,7 @@ export default {
       if (this.mouseIntersects(x - SEEKER_SELECT / 2, 0, SEEKER_SELECT, Infinity)) {
         // user is hovering over the seeker right now
         this.draggingSeeker = this.mouse.left;
-        // left/right resize, looks like an error pointing left and right
+        // left/right resize, looks like an arrow pointing left and right
         this.cursor = "ew-resize";
       } else {
         this.draggingSeeker = false;
@@ -232,7 +209,7 @@ export default {
       const scrollbarWidth = Math.max(percentOnScreen * this.canvas.width, SCROLLBAR_MIN_WIDTH);
 
       // The percentage of the screen that is to the left of the screen.
-      const percentToLeft = this.pageStart / this.song.size;
+      const percentToLeft = this.editor.viewport.firstTick / this.song.size;
       const scrollbarStart = percentToLeft * this.canvas.width;
 
       const startY = this.canvas.height - SCROLLBAR_HEIGHT;
@@ -291,15 +268,15 @@ export default {
       // Determine what we need to draw.
       const visibleTicks = this.visibleTicks;
       const visibleLayers = this.visibleLayers;
-      const pageStart = this.pageStart;
-      const pageEnd = this.pageEnd;
+      const start = this.editor.viewport.firstTick;
+      const end = this.editor.viewport.lastTick;
 
       // The note rendering loop loops through all the layers, and then through each note we need to draw.
       for (let l = 0; l < visibleLayers; l++) {
         const layer = this.song.layers[l];
 
         // Skip rows which do not contain enough notes to be rendered at this point
-        if (layer.notes.length < pageStart) {
+        if (layer.notes.length < start) {
           continue;
         }
 
@@ -311,8 +288,8 @@ export default {
         //  continue;
         // }
 
-        for (let t = pageStart; t < pageEnd; t++) {
-          const x = (t - pageStart) * NOTE_SIZE;
+        for (let t = start; t < end; t++) {
+          const x = (t - start) * NOTE_SIZE;
           const note = layer.notes[t];
 
           // Ofcourse theres no guarantee that a note exists at any point in a layer.
@@ -363,18 +340,19 @@ export default {
       this.canvas.height = boundingClientRect.height;
       this.canvas.width = boundingClientRect.width;
       this.boundingRects = boundingClientRect;
+      this.editor.viewport.width = Math.ceil(this.canvas.width / NOTE_SIZE);
 
       // Reset the cursor so it can change later.
       this.cursor = "";
 
       // Go to the next screen when the song has moved passed the end of this page.
-      if (this.song.currentTick >= this.pageEnd) {
-        this.pageStart = this.song.tick;
+      if (this.song.currentTick >= this.editor.viewport.lastTick) {
+        this.editor.viewport.firstTick = this.song.tick;
       }
 
       // Go back a screen when the song has moved before our screen
-      if (this.song.currentTick < this.pageStart) {
-        this.pageStart = this.song.tick;
+      if (this.song.currentTick < this.editor.viewport.firstTick) {
+        this.editor.viewport.firstTick = this.song.tick;
       }
 
       // Use translate() to shift the coordinate grid a bit during rendering.
