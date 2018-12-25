@@ -81,12 +81,6 @@ export default {
     cancelAnimationFrame(this.nextFrame);
   },
 
-  watch: {
-    "state.options.volume"(volume) {
-      audioDestination.gain.value = volume;
-    },
-  },
-
   methods: {
     /**
      * Plays a note given its layer.

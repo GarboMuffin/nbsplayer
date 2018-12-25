@@ -35,7 +35,7 @@ export class Song {
      */
     this.tempo = 5;
     /**
-     * The total number of ticks in the song.
+     * The length of the longest layer of the song.
      */
     this.size = 0;
 

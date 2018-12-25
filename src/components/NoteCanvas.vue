@@ -115,7 +115,6 @@ export default {
   mounted() {
     this.canvas = this.$refs.canvas;
     this.ctx = this.canvas.getContext("2d");
-    // TODO: WebGL?
   },
 
   methods: {

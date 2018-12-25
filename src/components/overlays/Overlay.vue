@@ -1,3 +1,5 @@
+<!-- TODO: Overlay is very weird, should be refactored. -->
+
 <template>
   <div class="overlay-container" v-if="computedVisible" @click.self="dismiss">
     <div class="overlay">

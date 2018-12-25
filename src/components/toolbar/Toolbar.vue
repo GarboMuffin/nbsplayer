@@ -50,7 +50,7 @@
 </template>
 
 <script>
-import * as NBS from "@/NBS.js";
+import { Song } from "@/NBS.js";
 import { state } from "@/state.js";
 
 export default {
@@ -122,24 +122,28 @@ export default {
      * Replaces the existing song with a new empty song.
      */
     newSong() {
-      state.setSong(NBS.Song.new());
+      state.setSong(Song.new());
     },
     /**
      * Downloads the song to the user's computer.
      */
     save() {
-      const buffer = NBS.Song.toArrayBuffer(this.state.song);
-      const array = new Uint8Array(buffer);
+      const buffer = Song.toArrayBuffer(this.state.song);
+
+      // Convert an ArrayBuffer to a Blob which can actually be downloaded
       const blob = new Blob([buffer], {
         type: "application/octet-stream",
       });
-      var url = URL.createObjectURL(blob);
+      // Create a URL for the blob that acts like any other URL.
+      const url = URL.createObjectURL(blob);
 
-      // Create a link and click on it automatically.
-      // This is dirty and probably won't work in some browsers.
       const link = document.createElement("a");
       link.href = url;
+      // Use the song's given name as the file's name when possible
       link.download = (this.state.song.name || "song") + ".nbs";
+
+      // Append the link to the DOM temporarily so clicking on it has an effect.
+      // Without appending it click() silently does nothing.
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

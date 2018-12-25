@@ -42,6 +42,12 @@ export const state = new Vue({
     };
   },
 
+  watch: {
+    "options.volume"(volume) {
+      audioDestination.gain.value = volume;
+    },
+  },
+
   methods: {
     setSong(song) {
       this.song = song;
