@@ -49,27 +49,28 @@
 
     <div class="separator"></div>
 
-    <a
-      title="Set Instrument"
-      class="button"
-      @click="state.editor.currentInstrument = instrument"
-      :value="state.editor.currentInstrument === instrument"
+    <instrument-button
+      v-for="instrument in state.song.instruments"
       :key="instrument.id"
-      v-for="instrument in state.song.instruments">
-      {{ instrument.id }}
-    </a>
+      :instrument="instrument"
+      :editor="state.editor"></instrument-button>
   </div>
 </template>
 
 <script>
 import { Song } from "@/NBS.js";
 import { state } from "@/state.js";
+import InstrumentButton from "./InstrumentButton.vue";
 
 export default {
   data() {
     return {
       state,
     };
+  },
+
+  components: {
+    InstrumentButton,
   },
 
   computed: {

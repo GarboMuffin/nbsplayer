@@ -4,12 +4,19 @@
     @mousedown.prevent="handleMouse"
     @mouseup.prevent="handleMouse"
     @mousemove="handleMouse"
+    @contextmenu.prevent
   ></canvas>
 </template>
 
 <script>
-import * as NBS from "../NBS.js";
-import { SongEditor } from "@/editor.js";
+/**
+ * Editor.vue itself should not handle editing notes of the song.
+ * It is essentially a wrapper around SongEditor that does rendering and user interactions.
+ * Currently in the process of moving more stuff to SongEditor.
+ */
+
+import * as NBS from "@/NBS.js";
+import { SongEditor } from "./editor.js";
 
 const ROW_HEIGHT = 32;
 const NOTE_SIZE = 32;
@@ -135,8 +142,7 @@ export default {
           if (isDown) {
             const note = this.editor.getNote(currentLayer, currentTick);
             if (note) {
-              this.editor.currentKey = note.key;
-              this.editor.currentInstrument = note.instrument;
+              this.editor.pickNote(note);
             }
           }
         } else if (e.button === 2) {

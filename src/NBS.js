@@ -247,7 +247,11 @@ export class Note {
  * Represents an instrument
  */
 export class Instrument {
-  constructor(id, audioSrc, textureSrc) {
+  constructor(name, id, audioSrc, textureSrc) {
+    /**
+     * The name of the instrument
+     */
+    this.name = name;
     /**
      * The ID of the instrument
      */
@@ -301,53 +305,63 @@ export class Instrument {
 Instrument.builtin = [
   // Vue will set the correct sources and sometimes inline images using require()
   new Instrument(
+    "Harp",
     0,
     require("./assets/instruments/audio/harp.ogg"),
     require("./assets/instruments/textures/harp.png")
   ),
   new Instrument(
+    "Double Bass",
     1,
     require("./assets/instruments/audio/dbass.ogg"),
     require("./assets/instruments/textures/dbass.png")
   ),
   new Instrument(
+    "Bass Drum",
     2,
     require("./assets/instruments/audio/bdrum.ogg"),
     require("./assets/instruments/textures/bdrum.png")
   ),
   new Instrument(
+    "Snare Drum",
     3,
     require("./assets/instruments/audio/sdrum.ogg"),
     require("./assets/instruments/textures/sdrum.png")
   ),
   new Instrument(
+    "Click",
     4,
     require("./assets/instruments/audio/click.ogg"),
     require("./assets/instruments/textures/click.png")
   ),
   new Instrument(
+    "Guitar",
     5,
     require("./assets/instruments/audio/guitar.ogg"),
     require("./assets/instruments/textures/guitar.png")
   ),
   new Instrument(
+    "Flute",
     6,
     require("./assets/instruments/audio/flute.ogg"),
     require("./assets/instruments/textures/flute.png")
   ),
   new Instrument(
+    "Bell",
     7,
     require("./assets/instruments/audio/bell.ogg"),
     require("./assets/instruments/textures/bell.png")
   ),
   new Instrument(
+    "Chime",
     8,
     require("./assets/instruments/audio/chime.ogg"),
     require("./assets/instruments/textures/chime.png")
   ),
   new Instrument(
+    "Xylophone",
     9,
-    require("./assets/instruments/audio/xylobone.ogg"),
+    require("./assets/instruments/audio/xylophone.ogg"),
     require("./assets/instruments/textures/xylophone.png")
   ),
 ];

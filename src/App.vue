@@ -23,8 +23,9 @@
       <toolbar id="toolbar"></toolbar>
       <div id="middle">
         <layer-list :song="state.song" id="layer-list"></layer-list>
-        <note-canvas :song="state.song" :editor="state.editor" ref="canvas" id="note-canvas"></note-canvas>
+        <editor :song="state.song" :editor="state.editor" ref="canvas" id="note-canvas"></editor>
       </div>
+      <!-- <keyboard :editor="state.editor"></keyboard> -->
     </div>
 
   </div>
@@ -33,7 +34,7 @@
 <script>
 import * as NBS from "./NBS.js";
 import { audioContext, audioDestination } from "./audio.js";
-import NoteCanvas from "./components/NoteCanvas.vue";
+import Editor from "./components/editor/Editor.vue";
 import LayerList from "./components/layers/LayerList.vue";
 import Overlay from "./components/overlays/Overlay.vue";
 import LoadingOverlay from "./components/overlays/LoadingOverlay.vue";
@@ -41,12 +42,12 @@ import WelcomeOverlay from "./components/overlays/WelcomeOverlay.vue";
 import SettingsOverlay from "./components/overlays/SettingsOverlay.vue";
 import SongDetailsOverlay from "./components/overlays/SongDetailsOverlay.vue";
 import Toolbar from "./components/toolbar/Toolbar.vue";
-
+import Keyboard from "./components/Keyboard.vue";
 import { state } from "@/state.js";
 
 export default {
   components: {
-    NoteCanvas,
+    Editor,
     Overlay,
     LoadingOverlay,
     WelcomeOverlay,
@@ -54,6 +55,7 @@ export default {
     SongDetailsOverlay,
     Toolbar,
     LayerList,
+    Keyboard,
   },
 
   data() {

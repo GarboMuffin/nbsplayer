@@ -1,4 +1,4 @@
-import { Layer, Instrument } from "./NBS";
+import { Layer } from "@/NBS";
 
 /**
  * Methods related to editing or displaying the notes of a song.
@@ -9,10 +9,19 @@ export class SongEditor {
      * The song being edited.
      */
     this.song = song;
+    /**
+     * The currently active key for newly placed notes.
+     */
     this.currentKey = 45;
+    /**
+     * The currently active instrument for newly placed instruments.
+     */
     this.currentInstrument = song.instruments[0];
   }
 
+  /**
+   * Gets a layer
+   */
   getLayer(layer) {
     if (layer instanceof Layer) {
       return layer;
@@ -24,10 +33,16 @@ export class SongEditor {
     throw new Error("Unknown layer: " + layer);
   }
 
+  /**
+   * Places a note using the currently active key and instrument
+   */
   placeNote(layer, tick) {
-    this.getLayer(layer).setNote(tick, this.currentKey, this.currentInstrument);
+    this.setNote(layer, tick, this.currentKey, this.currentInstrument);
   }
 
+  /**
+   * Gets a note
+   */
   getNote(layer, tick) {
     return this.getLayer(layer).notes[tick];
   }
@@ -47,9 +62,18 @@ export class SongEditor {
   }
 
   /**
+   * Replaces the current settings with those of a note.
+   * Similar to the "Pick Block" feature of Minecraft.
+   */
+  pickNote(note) {
+    this.currentInstrument = note.instrument;
+    this.currentKey = note.key;
+  }
+
+  /**
    * Formats a note's key as human readablet text.
    * 
-   * Format is "{note}{octave}", so you might get "A#3", "G-5", etc.
+   * Examples results are "A#3" and "F-4"
    */
   formatKey(key) {
     // TODO: strange logic and potentially buggy

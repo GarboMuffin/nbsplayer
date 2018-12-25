@@ -1,7 +1,7 @@
 import Vue from "vue";
 import { Song } from "./NBS.js";
 import { audioDestination } from "./audio.js";
-import { SongEditor } from "./editor.js";
+import { SongEditor } from "./components/editor/editor.js";
 
 /**
  * Global shared state.
