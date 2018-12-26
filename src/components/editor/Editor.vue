@@ -115,7 +115,7 @@ export default {
         const currentLayer = Math.floor(this.mouse.y / NOTE_SIZE) - 1;
         if (e.button === 0) {
           this.mouse.left = isDown;
-          if (isDown) {
+          if (!isDown && !(this.draggingSeeker || this.draggingScrollbar)) {
             this.editor.placeNote(currentLayer, currentTick);
           }
         } else if (e.button === 1) {
