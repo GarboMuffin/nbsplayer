@@ -247,7 +247,7 @@ export class Note {
  * Represents an instrument
  */
 export class Instrument {
-  constructor(name, id, audioSrc, textureSrc) {
+  constructor(name, id, audioSrc, textureSrc, pressKey) {
     /**
      * The name of the instrument
      */
@@ -264,6 +264,7 @@ export class Instrument {
      * The image to be fetched for the instrument's image in the editor
      */
     this.textureSrc = textureSrc;
+    this.pressKey = pressKey;
     /**
      * The resulting audio buffer that will contain the sound
      * Set by loadAudio() or load()
@@ -308,61 +309,71 @@ Instrument.builtin = [
     "Harp",
     0,
     require("./assets/instruments/audio/harp.ogg"),
-    require("./assets/instruments/textures/harp.png")
+    require("./assets/instruments/textures/harp.png"),
+    true
   ),
   new Instrument(
     "Double Bass",
     1,
     require("./assets/instruments/audio/dbass.ogg"),
-    require("./assets/instruments/textures/dbass.png")
+    require("./assets/instruments/textures/dbass.png"),
+    false
   ),
   new Instrument(
     "Bass Drum",
     2,
     require("./assets/instruments/audio/bdrum.ogg"),
-    require("./assets/instruments/textures/bdrum.png")
+    require("./assets/instruments/textures/bdrum.png"),
+    false
   ),
   new Instrument(
     "Snare Drum",
     3,
     require("./assets/instruments/audio/sdrum.ogg"),
-    require("./assets/instruments/textures/sdrum.png")
+    require("./assets/instruments/textures/sdrum.png"),
+    false
   ),
   new Instrument(
     "Click",
     4,
     require("./assets/instruments/audio/click.ogg"),
-    require("./assets/instruments/textures/click.png")
+    require("./assets/instruments/textures/click.png"),
+    false
   ),
   new Instrument(
     "Guitar",
     5,
     require("./assets/instruments/audio/guitar.ogg"),
-    require("./assets/instruments/textures/guitar.png")
+    require("./assets/instruments/textures/guitar.png"),
+    false
   ),
   new Instrument(
     "Flute",
     6,
     require("./assets/instruments/audio/flute.ogg"),
-    require("./assets/instruments/textures/flute.png")
+    require("./assets/instruments/textures/flute.png"),
+    false
   ),
   new Instrument(
     "Bell",
     7,
     require("./assets/instruments/audio/bell.ogg"),
-    require("./assets/instruments/textures/bell.png")
+    require("./assets/instruments/textures/bell.png"),
+    false
   ),
   new Instrument(
     "Chime",
     8,
     require("./assets/instruments/audio/chime.ogg"),
-    require("./assets/instruments/textures/chime.png")
+    require("./assets/instruments/textures/chime.png"),
+    false
   ),
   new Instrument(
     "Xylophone",
     9,
     require("./assets/instruments/audio/xylophone.ogg"),
-    require("./assets/instruments/textures/xylophone.png")
+    require("./assets/instruments/textures/xylophone.png"),
+    false
   ),
 ];
 

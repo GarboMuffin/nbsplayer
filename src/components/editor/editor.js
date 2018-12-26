@@ -1,5 +1,8 @@
 import { Layer } from "@/NBS";
 
+/**
+ * A visible part of a screen.
+ */
 export class Viewport {
   constructor() {
     /**
@@ -109,5 +112,22 @@ export class SongEditor {
     const keyText = KEY_TEXT[(key - 1) % 12];
     const octave = Math.floor((key - 1) / 12) + 1;
     return `${keyText}${octave}`;
+  }
+
+  seekTick(tick) {
+    this.song.currentTick = tick;
+    // TODO: updateViewport()?
+  }
+
+  /**
+   * Updates the viewport and ensures the current tick is currently in view.
+   */
+  updateViewport() {
+    if (this.song.currentTick >= this.viewport.lastTick) {
+      this.viewport.firstTick = this.song.tick;
+    }
+    if (this.song.currentTick < this.viewport.firstTick) {
+      this.viewport.firstTick = this.song.tick;
+    }
   }
 }

@@ -1,11 +1,13 @@
 <template>
-  <canvas
-    ref="canvas"
-    @mousedown.prevent="handleMouse"
-    @mouseup.prevent="handleMouse"
-    @mousemove="handleMouse"
-    @contextmenu.prevent
-  ></canvas>
+  <div class="editor">
+    <canvas
+      ref="canvas"
+      @mousedown.prevent="handleMouse"
+      @mouseup.prevent="handleMouse"
+      @mousemove="handleMouse"
+      @contextmenu.prevent
+    ></canvas>
+  </div>
 </template>
 
 <script>
@@ -23,6 +25,7 @@ const NOTE_SIZE = 32;
 
 const SEEKER_SIZE = 2;
 const SEEKER_SELECT = SEEKER_SIZE * 2;
+const SEEKER_TRIANGLE = 8;
 
 const SCROLLBAR_HEIGHT = 16;
 const SCROLLBAR_MIN_WIDTH = 12;
@@ -68,7 +71,7 @@ export default {
        * The bounding rect of the canvas element.
        * Updated at the start of every frame.
        */
-      boundingRects: new DOMRect(),
+      boundingRects: null,
       /**
        * Whether or not the seeker is being dragged.
        */
@@ -198,6 +201,13 @@ export default {
       } else {
         this.draggingSeeker = false;
       }
+
+      // Draws a triangle above the seeker
+      this.ctx.beginPath();
+      this.ctx.moveTo(x - SEEKER_TRIANGLE, 0);
+      this.ctx.lineTo(x + SEEKER_TRIANGLE, 0);
+      this.ctx.lineTo(x, SEEKER_TRIANGLE);
+      this.ctx.fill();
     },
 
     /**
@@ -329,36 +339,19 @@ export default {
      * Draws the canvas.
      */
     draw(time) {
-      // Temporary and dirty hack to handhold browser other than firefox and seem to behave differently
-      // when it comes to what `height: 100%` means
-      if (!navigator.userAgent.includes("Firefox")) {
-        const rows = this.song.layers.length + 2;
-        this.canvas.style.height = (rows * ROW_HEIGHT) + "px";
-      }
-
       const boundingClientRect = this.canvas.getBoundingClientRect();
       this.canvas.height = boundingClientRect.height;
       this.canvas.width = boundingClientRect.width;
       this.boundingRects = boundingClientRect;
-      this.editor.viewport.width = Math.ceil(this.canvas.width / NOTE_SIZE);
+      this.editor.viewport.width = this.canvas.width / NOTE_SIZE;
+      this.editor.updateViewport();
 
       // Reset the cursor so it can change later.
       this.cursor = "";
 
-      // Go to the next screen when the song has moved passed the end of this page.
-      if (this.song.currentTick >= this.editor.viewport.lastTick) {
-        this.editor.viewport.firstTick = this.song.tick;
-      }
-
-      // Go back a screen when the song has moved before our screen
-      if (this.song.currentTick < this.editor.viewport.firstTick) {
-        this.editor.viewport.firstTick = this.song.tick;
-      }
-
-      // Use translate() to shift the coordinate grid a bit during rendering.
-      // Simplifies drawNotes() since it can assume (0, 0) is where it should start working from.
+      // shift the grid up 1 row because drawNotes() starts rendering at (0, 0)
       this.ctx.save();
-      this.ctx.translate(0, ROW_HEIGHT); // shifts coordinate grid up 1 row
+      this.ctx.translate(0, ROW_HEIGHT);
       this.drawNotes(time);
       this.ctx.restore();
 
@@ -377,9 +370,15 @@ export default {
 </script>
 
 <style scoped>
+/* weird position jank to make the canvas size correctly in all browsers */
+.editor {
+  position: relative;
+}
 canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
-  display: block;
 }
 </style>

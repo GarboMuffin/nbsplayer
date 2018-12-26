@@ -1,7 +1,6 @@
-// Yell at the user if the browser does not support AudioContext
-if (!window.AudioContext) {
-  alert("Browser not supported. (does not support AudioContext)");
-}
+// TODO: use AudioContext or <audio> elements as fallback
+// TODO: object oriented
+// TODO: handle audio loading here
 
 /**
  * The audio context used by the app to create nodes, etc.
