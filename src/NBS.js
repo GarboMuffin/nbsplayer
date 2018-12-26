@@ -100,7 +100,8 @@ export class Song {
   }
 
   /**
-   * Plays the song
+   * Plays the song.
+   * If the song is ended then it will be restarted.
    */
   play() {
     if (this.currentTick >= this.size) {

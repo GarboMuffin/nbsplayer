@@ -189,7 +189,7 @@ export default {
   background-image: linear-gradient(#eee, #ccc);
 }
 .button:active {
-  background-image: linear-gradient(#ccc, #aaa);
+  background-color: #ccc;
 }
 .button-image {
   width: 100%;

@@ -61,9 +61,16 @@ export const state = new Vue({
   },
 
   watch: {
+    // When the volume option changes, change the real volume to match.
     "options.volume"(volume) {
       audioDestination.gain.value = volume;
     },
+    // When loop is enabled and the song has ended, restart the song.
+    "options.loop"(loop) {
+      if (loop && this.song.tick === this.song.size) {
+        this.song.play();
+      }
+    }
   },
 
   methods: {
