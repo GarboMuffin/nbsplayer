@@ -12,26 +12,14 @@
 
 <script>
 /**
- * Editor.vue itself should not handle editing notes of the song.
- * It is essentially a wrapper around SongEditor that does rendering and user interactions.
- * Currently in the process of moving more stuff to SongEditor.
+ * Editor.vue is essentially a small game engine.
+ * It has a list of "objects" (sprites) that are updated and rendered sequentially.
  */
 
 import * as NBS from "@/NBS.js";
 import { SongEditor } from "./editor.js";
-
-const ROW_HEIGHT = 32;
-const NOTE_SIZE = 32;
-
-const SEEKER_SIZE = 2;
-const SEEKER_SELECT = SEEKER_SIZE * 2;
-const SEEKER_TRIANGLE = 8;
-
-const SCROLLBAR_HEIGHT = 16;
-const SCROLLBAR_MIN_WIDTH = 12;
-const SCROLLBAR_INACTIVE_COLOR = "#777";
-const SCROLLBAR_ACTIVE_COLOR = "#555";
-const SCROLLBAR_HOVER_COLOR = "#666";
+import { NOTE_SIZE } from "./config.js";
+import * as Objects from "./objects.js";
 
 export default {
   props: {
@@ -52,7 +40,7 @@ export default {
       /**
        * Cache for note textures. Maps a texture ID to the texture.
        */
-      textureCache: new Map(),
+      textureCache: {},
       /**
        * The cursor to display on the canvas. Updated every frame.
        */
@@ -73,35 +61,25 @@ export default {
        */
       boundingRects: null,
       /**
-       * Whether or not the seeker is being dragged.
+       * Objets within this editor.
        */
-      draggingSeeker: false,
+      objects: [],
       /**
-       * Whether or not the scrollbar is being dragged.
+       * The object currently being interacted with, if any.
        */
-      draggingScrollbar: false,
+      interaction: null,
     };
-  },
-
-  computed: {
-    /**
-     * The amount of ticks that are visible on the canvas.
-     */
-    visibleTicks() {
-      return Math.ceil(this.canvas.width / NOTE_SIZE);
-    },
-    /**
-     * The amount of layers that are visible on the canvas.
-     */
-    visibleLayers() {
-      const maxVisibleLayers = Math.ceil(this.canvas.height / ROW_HEIGHT);
-      return Math.min(this.song.layers.length, maxVisibleLayers);
-    },
   },
 
   mounted() {
     this.canvas = this.$refs.canvas;
     this.ctx = this.canvas.getContext("2d");
+
+    this.objects.push(new Objects.EditorWrapper());
+    this.objects.push(new Objects.SongEndLine());
+    this.objects.push(new Objects.SongStartLine());
+    this.objects.push(new Objects.SeekerLine());
+    this.objects.push(new Objects.Scrollbar());
   },
 
   methods: {
@@ -111,26 +89,19 @@ export default {
     handleMouse(e) {
       if (e.type === "mouseup" || e.type === "mousedown") {
         const isDown = e.type === "mousedown";
-        const currentTick = Math.floor(this.mouse.x / NOTE_SIZE) + this.editor.viewport.firstTick;
-        const currentLayer = Math.floor(this.mouse.y / NOTE_SIZE) - 1;
+
         if (e.button === 0) {
           this.mouse.left = isDown;
-          if (!isDown && !(this.draggingSeeker || this.draggingScrollbar)) {
-            this.editor.placeNote(currentLayer, currentTick);
-          }
         } else if (e.button === 1) {
           this.mouse.middle = isDown;
-          if (isDown) {
-            const note = this.editor.getNote(currentLayer, currentTick);
-            if (note) {
-              this.editor.pickNote(note);
-            }
-          }
         } else if (e.button === 2) {
           this.mouse.right = isDown;
-          if (isDown) {
-            this.editor.deleteNote(currentLayer, currentTick);
-          }
+        }
+
+        if (isDown) {
+          this.findInteraction(e.button);
+        } else {
+          this.endInteraction();
         }
       } else if (e.type === "mousemove") {
         const prevX = this.mouse.x;
@@ -139,111 +110,63 @@ export default {
         this.mouse.x = e.clientX - this.boundingRects.left;
         this.mouse.y = e.clientY - this.boundingRects.top;
 
-        if (this.draggingScrollbar) {
-          this.dragScrollbar(prevX, this.mouse.x);
-        } else if (this.draggingSeeker) {
-          this.dragSeeker(prevX, this.mouse.x);
+        if (this.interaction) {
+          const dx = this.mouse.x - prevX;
+          const dy = this.mouse.y - prevY;
+          this.interaction.dragged(this, dx, dy);
         }
       }
     },
 
     /**
-     * Determines if the mouse intersects a rectangle with a given x coordinate, y coordinate, width, and height.
+     * Ends the current interaction, if any.
      */
-    mouseIntersects(x, y, w, h) {
-      const mx = this.mouse.x;
-      const my = this.mouse.y;
-      return mx >= x && mx <= x + w && my >= y && my <= y + h;
+    endInteraction() {
+      if (!this.interaction) {
+        return;
+      }
+      this.interaction.interactEnd(this);
+      this.interaction = null;
     },
 
     /**
-     * Drags the seeker from one coordinate (x1) to another coordinate (x2) on the screen.
+     * Attempts to find an object to interact with and begins the interaction with that object.
      */
-    dragSeeker(x1, x2) {
-      const movement = x2 - x1;
-      const ticksMoved = movement / NOTE_SIZE;
-      this.song.currentTick += ticksMoved;
-      this.song.paused = true;
-    },
+    findInteraction(button) {
+      // We do interaction searching on objects in reverse.
+      // Objects that are later in the list are displayed on top and naturally should be prioritized for interactions.
 
-    /**
-     * Drags the scrollbar from one coordinate (x1) to another coordinate (x2) on the screen.
-     */
-    dragScrollbar(x1, x2) {
-      const movement = x2 - x1;
-      const percentMoved = movement / this.canvas.width;
-      const ticksMoved = percentMoved * this.song.size;
-      const newTick = this.song.currentTick + ticksMoved;
-      this.song.currentTick = newTick;
-      this.editor.viewport.firstTick = Math.floor(newTick) - 1;
-      this.song.paused = true;
-    },
-
-    /**
-     * Draws the "seeker", the bar that shows the current time.
-     * It can be dragged to "seek" around the song.
-     */
-    drawSeeker() {
-      // the current tick, relative to the current screen.
-      const screenRelativeTick = this.song.currentTick - this.editor.viewport.firstTick;
-      const x = screenRelativeTick * NOTE_SIZE;
-      this.ctx.fillStyle = "#000000";
-
-      // subtract half the width from the x coordinate so the center of the bar is the true position
-      this.ctx.fillRect(x - SEEKER_SIZE / 2, 0, SEEKER_SIZE, this.canvas.height);
-
-      // If the mouse is within an infinity tall rectangle around the seeker
-      if (this.mouseIntersects(x - SEEKER_SELECT / 2, 0, SEEKER_SELECT, Infinity)) {
-        // user is hovering over the seeker right now
-        this.draggingSeeker = this.mouse.left;
-        // left/right resize, looks like an arrow pointing left and right
-        this.cursor = "ew-resize";
-      } else {
-        this.draggingSeeker = false;
+      let i = this.objects.length;
+      while (i--) {
+        const object = this.objects[i];
+        if (object.intersectsPoint(this.mouse)) {
+          const interaction = object.interact(this, button);
+          if (interaction) {
+            this.interaction = object;
+            return true;
+          }
+        }
       }
 
-      // Draws a triangle above the seeker
-      this.ctx.beginPath();
-      this.ctx.moveTo(x - SEEKER_TRIANGLE, 0);
-      this.ctx.lineTo(x + SEEKER_TRIANGLE, 0);
-      this.ctx.lineTo(x, SEEKER_TRIANGLE);
-      this.ctx.fill();
+      return false;
     },
 
     /**
-     * Draws a scrollbar at the bottom of the canvas.
+     * Updates all objects.
      */
-    drawScrollbar() {
-      // The percentage of the screen that is currently on screen.
-      const percentOnScreen = this.visibleTicks / this.song.size;
-      const scrollbarWidth = Math.max(percentOnScreen * this.canvas.width, SCROLLBAR_MIN_WIDTH);
-
-      // The percentage of the screen that is to the left of the screen.
-      const percentToLeft = this.editor.viewport.firstTick / this.song.size;
-      const scrollbarStart = percentToLeft * this.canvas.width;
-
-      const startY = this.canvas.height - SCROLLBAR_HEIGHT;
-
-      // The mouse's intersection with the scrollbar changes its color.
-      const mouseIntersects = this.mouseIntersects(scrollbarStart, startY, scrollbarWidth, SCROLLBAR_HEIGHT);
-      if (mouseIntersects) {
-        this.draggingScrollbar = this.mouse.left;
-        if (this.mouse.left) {
-          this.ctx.fillStyle = SCROLLBAR_ACTIVE_COLOR;
-        } else {
-          this.ctx.fillStyle = SCROLLBAR_HOVER_COLOR;
-        }
-      } else {
-        // Even if the mouse is not on the scrollbar we did not immediately stop the interaction.
-        // If the user grabs the scrollbar then moves the mouse up, they still want to grab it
-        // until they release their mouse.
-        if (this.draggingScrollbar && !this.mouse.left) {
-          this.draggingScrollbar = false;
-        }
-        this.ctx.fillStyle = SCROLLBAR_INACTIVE_COLOR;
+    updateObjects() {
+      for (const object of this.objects) {
+        object.update(this);
       }
+    },
 
-      this.ctx.fillRect(scrollbarStart, startY, scrollbarWidth, SCROLLBAR_HEIGHT);
+    /**
+     * Renders all objects.
+     */
+    renderObjects(time) {
+      for (const object of this.objects) {
+        object.render(this.ctx, time);
+      }
     },
 
     /**
@@ -276,13 +199,12 @@ export default {
       };
 
       // Determine what we need to draw.
-      const visibleTicks = this.visibleTicks;
-      const visibleLayers = this.visibleLayers;
+      const visibleTicks = this.editor.viewport.width;
       const start = this.editor.viewport.firstTick;
       const end = this.editor.viewport.lastTick;
 
       // The note rendering loop loops through all the layers, and then through each note we need to draw.
-      for (let l = 0; l < visibleLayers; l++) {
+      for (let l = 0; l < this.song.layers.length; l++) {
         const layer = this.song.layers[l];
 
         // Skip rows which do not contain enough notes to be rendered at this point
@@ -290,13 +212,13 @@ export default {
           continue;
         }
 
-        const y = l * ROW_HEIGHT;
+        const y = l * NOTE_SIZE;
 
         // TODO: fix layer culling
         // Skip rows in which we know that they will be offscreen
-        // if (Math.abs(this.boundingRects.y) - NOTE_SIZE > y || this.boundingRects.y + this.boundingRects.height + NOTE_SIZE < y) {
-        //  continue;
-        // }
+        if (Math.abs(this.boundingRects.y) - NOTE_SIZE > y) {
+         continue;
+        }
 
         for (let t = start; t < end; t++) {
           const x = (t - start) * NOTE_SIZE;
@@ -319,13 +241,11 @@ export default {
           // All notes with the same characteristics will have the same texture id.
           const textureId = `${note.instrument.id}-${note.key}`;
 
-          // Creating the note textures is slow, so they're cached in a map.
-          // The texture is only created when it does not exist in the cache.
-          if (!this.textureCache.has(textureId)) {
+          if (!(textureId in this.textureCache)) {
             const texture = createNoteTexture(note.instrument, note.key);
-            this.textureCache.set(textureId, texture);
+            this.textureCache[textureId] = texture;
           }
-          this.ctx.drawImage(this.textureCache.get(textureId), x, y);
+          this.ctx.drawImage(this.textureCache[textureId], x, y);
 
           // If we mucked with the opacity, remeber to cleanup after ourselves.
           if (timeSincePlayed < 1000) {
@@ -336,9 +256,10 @@ export default {
     },
 
     /**
-     * Draws the canvas.
+     * Updates the canvas.
      */
-    draw(time) {
+    update(time) {
+      // TODO: getting client rects is slow, cache it?
       const boundingClientRect = this.canvas.getBoundingClientRect();
       this.canvas.height = boundingClientRect.height;
       this.canvas.width = boundingClientRect.width;
@@ -346,23 +267,19 @@ export default {
       this.editor.viewport.width = this.canvas.width / NOTE_SIZE;
       this.editor.updateViewport();
 
-      // Reset the cursor so it can change later.
       this.cursor = "";
 
-      // shift the grid up 1 row because drawNotes() starts rendering at (0, 0)
+      this.updateObjects();
+
+      // Note rendering is handled outside of updateObjects and renderObjects. It's simpler this way.
+      // drawNotes assumes it can start at (0, 0) for simplicity, so translate the canvas to make it work correctly.
       this.ctx.save();
-      this.ctx.translate(0, ROW_HEIGHT);
+      this.ctx.translate(0, NOTE_SIZE);
       this.drawNotes(time);
       this.ctx.restore();
 
-      this.drawSeeker();
+      this.renderObjects(time);
 
-      // Scrollbar should only be drawn if the entire song does not fit on a single screen.
-      if (this.song.size > this.visibleTicks) {
-        this.drawScrollbar();
-      }
-
-      // Apply any changes to the cursor that have happened.
       this.canvas.style.cursor = this.cursor;
     },
   },

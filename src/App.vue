@@ -166,7 +166,7 @@ export default {
 
       // Draw the canvas after updating the song.
       if (this.$refs.canvas) {
-        this.$refs.canvas.draw(time);
+        this.$refs.canvas.update(time);
       }
     },
   }
