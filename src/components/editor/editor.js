@@ -103,14 +103,12 @@ export class SongEditor {
    * Examples results are "A#3" and "F-4"
    */
   formatKey(key) {
-    // TODO: strange logic and potentially buggy
-
     const KEY_TEXT = [
-      "A#", "B-", "C-", "C#", "D-", "D#", "E-", "F-", "F#", "G-", "G#", "A-",
+      "C-", "C#", "D-", "D#", "E-", "F-", "F#", "G-", "G#", "A-", "A#", "B-", 
     ];
 
-    const keyText = KEY_TEXT[(key - 1) % 12];
-    const octave = Math.floor((key - 1) / 12) + 1;
+    const keyText = KEY_TEXT[(key - 3) % 12];
+    const octave = Math.floor((key - 3) / 12) + 1;
     return `${keyText}${octave}`;
   }
 
