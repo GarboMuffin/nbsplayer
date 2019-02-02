@@ -214,12 +214,6 @@ export default {
 
         const y = l * NOTE_SIZE;
 
-        // TODO: fix layer culling
-        // Skip rows in which we know that they will be offscreen
-        if (Math.abs(this.boundingRects.y) - NOTE_SIZE > y) {
-         continue;
-        }
-
         for (let t = start; t < end; t++) {
           const x = (t - start) * NOTE_SIZE;
           const note = layer.notes[t];
