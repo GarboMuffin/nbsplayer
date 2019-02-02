@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-row">
+  <div class="toolbar flex flex-row">
     <a @click="newSong" class="button" title="New">
       <img class="button-image" src="@/assets/toolbar/new.svg" alt="New">
     </a>
@@ -166,6 +166,10 @@ export default {
 </script>
 
 <style scoped>
+.toolbar {
+  overflow-x: auto;
+}
+
 .separator {
   border-right: 1px solid #999;
   margin: 2px;
