@@ -27,6 +27,21 @@ export class Viewport {
  * Methods related to editing or displaying the notes of a song.
  */
 export class SongEditor {
+  /**
+   * Formats a note's key as human readable text.
+   * 
+   * Examples results are "A#3" and "F-4"
+   */
+  static formatKey(key) {
+    const KEY_TEXT = [
+      "C-", "C#", "D-", "D#", "E-", "F-", "F#", "G-", "G#", "A-", "A#", "B-", 
+    ];
+
+    const keyText = KEY_TEXT[(key - 3) % 12];
+    const octave = Math.floor((key - 3) / 12) + 1;
+    return `${keyText}${octave}`;
+  }
+
   constructor(song) {
     /**
      * The song being edited.
@@ -95,21 +110,6 @@ export class SongEditor {
   pickNote(note) {
     this.currentInstrument = note.instrument;
     this.currentKey = note.key;
-  }
-
-  /**
-   * Formats a note's key as human readablet text.
-   * 
-   * Examples results are "A#3" and "F-4"
-   */
-  formatKey(key) {
-    const KEY_TEXT = [
-      "C-", "C#", "D-", "D#", "E-", "F-", "F#", "G-", "G#", "A-", "A#", "B-", 
-    ];
-
-    const keyText = KEY_TEXT[(key - 3) % 12];
-    const octave = Math.floor((key - 3) / 12) + 1;
-    return `${keyText}${octave}`;
   }
 
   seekTick(tick) {

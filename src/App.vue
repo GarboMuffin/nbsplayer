@@ -25,7 +25,7 @@
         <layer-list :song="state.song" id="layer-list"></layer-list>
         <editor :song="state.song" :editor="state.editor" ref="canvas" id="note-canvas"></editor>
       </div>
-      <!-- <keyboard :editor="state.editor"></keyboard> -->
+      <keyboard id="keyboard" :editor="state.editor"></keyboard>
     </div>
 
   </div>
@@ -42,7 +42,7 @@ import WelcomeOverlay from "./components/overlays/WelcomeOverlay.vue";
 import SettingsOverlay from "./components/overlays/SettingsOverlay.vue";
 import SongDetailsOverlay from "./components/overlays/SongDetailsOverlay.vue";
 import Toolbar from "./components/toolbar/Toolbar.vue";
-import Keyboard from "./components/Keyboard.vue";
+import Keyboard from "./components/keyboard/Keyboard.vue";
 import { state } from "@/state.js";
 
 export default {
@@ -215,14 +215,11 @@ a:hover {
   display: grid;
   width: 100vw;
   height: 100vh;
-  grid-template-rows: 32px auto;
+  grid-template-rows: 32px auto 130px;
   grid-template-columns: auto;
 }
 #layer-list {
   border-right: 1px solid #777;
-}
-#toolbar {
-  border-bottom: 1px solid #777;
 }
 #middle {
   display: grid;
@@ -232,5 +229,7 @@ a:hover {
   overflow-y: auto;
   background-image: url("assets/layersbackground.jpg");
   background-attachment: local;
+  border-top: 1px solid #777;
+  border-bottom: 1px solid #777;
 }
 </style>

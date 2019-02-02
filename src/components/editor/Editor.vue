@@ -192,7 +192,7 @@ export default {
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
 
-        const text = this.editor.formatKey(key);
+        const text = SongEditor.formatKey(key);
         ctx.fillText(text, NOTE_SIZE / 2, NOTE_SIZE / 2);
 
         return canvas;
