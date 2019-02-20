@@ -59,6 +59,10 @@ export class SongEditor {
      * The currently visible part of the song.
      */
     this.viewport = new Viewport();
+    /**
+     * Has the song been modified?
+     */
+    this.modified = false;
   }
 
   /**
@@ -79,6 +83,7 @@ export class SongEditor {
    * Places a note using the currently active key and instrument
    */
   placeNote(layer, tick) {
+    this.modified = true;
     return this.setNote(layer, tick, this.currentKey, this.currentInstrument);
   }
 
@@ -100,6 +105,7 @@ export class SongEditor {
    * Deletes a note of a song
    */
   deleteNote(layer, tick) {
+    this.modified = true;
     this.getLayer(layer).deleteNote(tick);
   }
 

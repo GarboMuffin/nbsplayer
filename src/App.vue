@@ -76,6 +76,13 @@ export default {
         this.state.showWelcome = true;
         requestAnimationFrame((time) => this.tick(time));
       });
+
+    window.onbeforeunload = (e) => {
+      if (this.state.editor.modified) {
+        // Most browsers don't actually show this message.
+        return "Your changes might not be saved";
+      }
+    };
   },
 
   beforeDestroy() {

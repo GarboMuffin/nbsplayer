@@ -160,6 +160,9 @@ export default {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+
+      // Any changes were just saved locally.
+      state.editor.modified = false;
     }
   },
 }
