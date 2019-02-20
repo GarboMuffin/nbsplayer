@@ -1,4 +1,5 @@
 import { NOTE_SIZE } from "./config.js";
+import { state } from "@/state.js";
 
 /**
  * An object in the editor.
@@ -287,7 +288,8 @@ export class EditorWrapper extends EditorObject {
     const tick = Math.floor(vm.mouse.x / NOTE_SIZE) + vm.editor.viewport.firstTick;
     const layer = Math.floor(vm.mouse.y / NOTE_SIZE) - 1;
     if (this.button === 0) {
-      vm.editor.placeNote(layer, tick);
+      const note = vm.editor.placeNote(layer, tick);
+      state.playNote(note);
     } else if (button === 1) {
       const note = vm.editor.getNote(layer, tick);
       if (note) {

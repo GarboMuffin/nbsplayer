@@ -253,7 +253,7 @@ export default {
      * Updates the canvas.
      */
     update(time) {
-      // TODO: getting client rects is slow, cache it?
+      // TODO: getting client rects is sometimes slow, cache it?
       const boundingClientRect = this.canvas.getBoundingClientRect();
       this.canvas.height = boundingClientRect.height;
       this.canvas.width = boundingClientRect.width;

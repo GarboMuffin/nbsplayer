@@ -6,6 +6,7 @@
 
 <script>
 import { SongEditor } from "@/components/editor/editor";
+import { state } from '@/state';
 
 export default {
   props: {
@@ -29,6 +30,7 @@ export default {
   methods: {
     select() {
       this.editor.currentKey = this.note;
+      state.playNote(this.note, this.editor.currentInstrument);
     },
   },
 }

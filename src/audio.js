@@ -1,16 +1,35 @@
-// TODO: use AudioContext or <audio> elements as fallback
-// TODO: object oriented
+
+// TODO: <audio> elements as fallback
 // TODO: handle audio loading here
 
-/**
- * The audio context used by the app to create nodes, etc.
- */
-export const audioContext = new AudioContext();
-
-/**
- * The destination for all audio nodes in the app.
- * Use instead of audioContext.destination.
- */
-export const audioDestination = audioContext.createGain();
-
+const audioContext = new AudioContext();
+const audioDestination = audioContext.createGain();
 audioDestination.connect(audioContext.destination);
+
+export class WebAudioNotePlayer {
+  static setVolume(volume) {
+    audioDestination.gain.value = volume;
+  }
+
+  static playNote(key, instrument, volume) {
+    const playbackRate = 2 ** (key / 12);
+
+    let source = audioContext.createBufferSource();
+    source.playbackRate.value = playbackRate;
+    source.buffer = instrument.audioBuffer;
+    source.start(0);
+
+    if (volume !== 100) {
+      const gainNode = audioContext.createGain();
+      gainNode.gain.value = volume;
+      source.connect(gainNode);
+      source = gainNode;
+    }
+
+    source.connect(audioDestination);
+  }
+
+  static decodeAudioData(buffer) {
+    return audioContext.decodeAudioData(buffer);
+  }
+}

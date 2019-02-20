@@ -1,7 +1,7 @@
 import Vue from "vue";
-import { Song } from "./NBS.js";
-import { audioDestination } from "./audio.js";
+import { Song, Instrument } from "./NBS.js";
 import { SongEditor } from "./components/editor/editor.js";
+import { WebAudioNotePlayer } from "./audio.js";
 
 /**
  * Global shared state.
@@ -63,7 +63,7 @@ export const state = new Vue({
   watch: {
     // When the volume option changes, change the real volume to match.
     "options.volume"(volume) {
-      audioDestination.gain.value = volume;
+      WebAudioNotePlayer.setVolume(volume);
     },
     // When loop is enabled and the song has ended, restart the song.
     "options.loop"(loop) {
@@ -74,9 +74,42 @@ export const state = new Vue({
   },
 
   methods: {
+    /**
+     * Replaces the current song.
+     * Constructs a SongEditor object for the song.
+     */
     setSong(song) {
       this.song = song;
       this.editor = new SongEditor(song);
+    },
+
+    /**
+     * Plays a note.
+     * 
+     * playNote(note, instrument, layer?)
+     * note - Note | number
+     * instrument - Instrument
+     * layer (optional) - Layer (if not present, volume is assumed to be 100%)
+     * 
+     * playNote(note, layer?)
+     * note - Note
+     * layer (optional) - Layer (if not present, volume is assumed to be 100%)
+     * Instrument is assumed from note
+     * 
+     * keyOffset is always applied to the note.
+     */
+    playNote(note, b, c) {
+      if (b instanceof Instrument) {
+        var key = (typeof note === "number" ? note : note.key);
+        var instrument = b;
+        var volume = c ? c.volume : 100;
+      } else {
+        var key = note.key;
+        var instrument = note.instrument;
+        var volume = b ? b.volume : 100;
+      }
+
+      WebAudioNotePlayer.playNote(key - this.options.keyOffset, instrument, volume);
     },
 
     /**

@@ -33,7 +33,7 @@
 
 <script>
 import * as NBS from "./NBS.js";
-import { audioContext, audioDestination } from "./audio.js";
+import { WebAudioNotePlayer } from "./audio.js";
 import Editor from "./components/editor/Editor.vue";
 import LayerList from "./components/layers/LayerList.vue";
 import Overlay from "./components/overlays/Overlay.vue";
@@ -85,33 +85,6 @@ export default {
 
   methods: {
     /**
-     * Plays a note given its layer.
-     */
-    playNote(note, layer) {
-      // Determine the playbackRate using the key
-      const keyChange = note.key - this.state.options.keyOffset;
-      const playbackRate = 2 ** (keyChange / 12);
-
-      // Create an audio source using the instrument's buffer
-      const source = audioContext.createBufferSource();
-      source.playbackRate.value = playbackRate;
-      source.buffer = note.instrument.audioBuffer;
-      source.start(0);
-
-      // If our layer volume is not 100% and we are set to respect layer volume,
-      // then use a gain node to apply that volume
-      // TODO: maybe the layers should have gain node that all notes connect to?
-      if (layer.volume !== 100) {
-        const gainNode = audioContext.createGain();
-        gainNode.gain.value = layer.volume;
-        source.connect(gainNode);
-        return gainNode;
-      }
-
-      return source;
-    },
-
-    /**
      * Advanced the song forward.
      */
     advanceSong(time, timePassed) {
@@ -143,7 +116,7 @@ export default {
       for (const layer of song.layers) {
         const note = layer.notes[song.tick];
         if (note) {
-          this.playNote(note, layer).connect(audioDestination);
+          state.playNote(note, layer);
           note.lastPlayed = time;
         }
       }

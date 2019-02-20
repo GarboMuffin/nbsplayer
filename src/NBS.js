@@ -1,4 +1,4 @@
-import { audioContext } from "./audio.js";
+import { WebAudioNotePlayer } from "./audio";
 
 /**
  * NBS.js: JavaScript implementation of parsing, saving, and abstracting .nbs files.
@@ -196,6 +196,7 @@ export class Layer {
     note.key = key;
     note.instrument = instrument;
     this.notes[tick] = note;
+    return note;
   }
 
   /**
@@ -283,7 +284,7 @@ export class Instrument {
   loadAudio() {
     return fetch(this.audioSrc)
       .then((data) => data.arrayBuffer())
-      .then((audioData) => audioContext.decodeAudioData(audioData))
+      .then((audioData) => WebAudioNotePlayer.decodeAudioData(audioData))
       .then((buffer) => this.audioBuffer = buffer);
   }
 

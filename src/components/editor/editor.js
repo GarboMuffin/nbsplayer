@@ -79,7 +79,7 @@ export class SongEditor {
    * Places a note using the currently active key and instrument
    */
   placeNote(layer, tick) {
-    this.setNote(layer, tick, this.currentKey, this.currentInstrument);
+    return this.setNote(layer, tick, this.currentKey, this.currentInstrument);
   }
 
   /**
@@ -93,7 +93,7 @@ export class SongEditor {
    * Sets a note in a song
    */
   setNote(layer, tick, key, instrument) {
-    this.getLayer(layer).setNote(tick, key, instrument);
+    return this.getLayer(layer).setNote(tick, key, instrument);
   }
 
   /**
