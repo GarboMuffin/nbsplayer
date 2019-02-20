@@ -41,7 +41,7 @@ export default {
   position: relative;
   width: 40px;
   height: 100%;
-  border-radius: 3px;
+  border-radius: 0 0 3px 3px;
   box-sizing: border-box;
   cursor: pointer;
 }
