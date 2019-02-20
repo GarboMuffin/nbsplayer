@@ -1,6 +1,8 @@
 <template>
   <div id="app">
 
+    <vue-title :title="tabTitle"></vue-title>
+
     <!-- Overlays -->
     <overlay v-model="state.showWelcome" ref="welcomeOverlay" dismissable>
       <welcome-overlay></welcome-overlay>
@@ -41,6 +43,7 @@ import LoadingOverlay from "./components/overlays/LoadingOverlay.vue";
 import WelcomeOverlay from "./components/overlays/WelcomeOverlay.vue";
 import SettingsOverlay from "./components/overlays/SettingsOverlay.vue";
 import SongDetailsOverlay from "./components/overlays/SongDetailsOverlay.vue";
+import VueTitle from "./components/VueTitle.vue";
 import Toolbar from "./components/toolbar/Toolbar.vue";
 import Keyboard from "./components/keyboard/Keyboard.vue";
 import { state } from "@/state.js";
@@ -56,6 +59,7 @@ export default {
     Toolbar,
     LayerList,
     Keyboard,
+    VueTitle,
   },
 
   data() {
@@ -88,6 +92,22 @@ export default {
   beforeDestroy() {
     // Stop the frame loop if the app is unmounted for whatever reason.
     cancelAnimationFrame(this.nextFrame);
+  },
+
+  computed: {
+    // The title of the browser tab.
+    tabTitle() {
+      // If no song name & not edited, "nbsplayer"
+      // If no song name & edited, "*nbsplayer"
+      // If song name & not edited, "Song Name - nbsplayer"
+      // If song name & edited, "*Song Name - nbsplayer"
+
+      const base = state.song.name ? `${state.song.name} - nbsplayer` : "nbsplayer";
+      if (state.editor.modified) {
+        return `*${base}`;
+      }
+      return base;
+    }
   },
 
   methods: {
