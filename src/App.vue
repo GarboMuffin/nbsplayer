@@ -25,7 +25,7 @@
       <toolbar id="toolbar"></toolbar>
       <div id="middle">
         <layer-list :song="state.song" id="layer-list"></layer-list>
-        <editor :song="state.song" :editor="state.editor" ref="canvas" id="note-canvas"></editor>
+        <editor :song="state.song" :editor="state.editor" ref="canvas" id="editor"></editor>
       </div>
       <keyboard id="keyboard" :editor="state.editor"></keyboard>
     </div>
@@ -212,24 +212,31 @@ a:hover {
 }
 
 #main {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   width: 100vw;
   height: 100vh;
-  grid-template-rows: 32px auto 130px;
-  grid-template-columns: auto;
 }
-#layer-list {
-  border-right: 1px solid #777;
-}
+
 #middle {
-  display: grid;
+  display: flex;
+  flex-direction: row;
+  flex: 1;
   width: 100vw;
-  grid-template-rows: auto;
-  grid-template-columns: 200px auto;
   overflow-y: auto;
   background-image: url("assets/layersbackground.jpg");
   background-attachment: local;
   border-top: 1px solid #777;
   border-bottom: 1px solid #777;
+}
+#layer-list {
+  border-right: 1px solid #777;
+  width: 200px;
+}
+#editor {
+  flex: 1;
+}
+#keyboard {
+  height: 130px;
 }
 </style>

@@ -1,5 +1,5 @@
 <template>
-  <a class="button" @click="setInstrument" :value="active" :title="title">
+  <a class="button" @click="activate" :value="active" :title="title">
     <div class="instrument-body">{{ text }}</div>
   </a>
 </template>
@@ -7,6 +7,7 @@
 <script>
 import { Instrument } from "@/NBS";
 import { SongEditor } from "@/components/editor/editor";
+import { state } from '@/state';
 
 export default {
   props: {
@@ -32,8 +33,9 @@ export default {
   },
 
   methods: {
-    setInstrument() {
+    activate() {
       this.editor.currentInstrument = this.instrument;
+      state.playNote(this.editor.currentKey, this.instrument);
     }
   }
 }
