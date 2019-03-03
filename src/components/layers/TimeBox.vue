@@ -1,14 +1,13 @@
 <template>
-  <div class="row flex flex-row timebox">
+  <div class="row flex flex-row flex-center timebox">
     <div class="times">
       <div class="current">{{ currentTime }}</div>
       <div class="end">{{ endTime }}</div>
     </div>
-    <div class="flex flex-center">
-      <div :vanilla-friendly="isVanillaFriendlyTempo" @click.self="focusTempo" class="tempo-container" title="Tempo in ticks per second">
-        <input ref="tempo" type="number" v-model.number="song.tempo" class="no-spinners" name="tempo" step="0.25">
-        t/s
-      </div>
+
+    <div :vanilla-friendly="isVanillaFriendlyTempo" @click.self="focusTempo" class="tempo-container" title="Tempo in ticks per second">
+      <input ref="tempo" type="number" v-model.number="song.tempo" class="no-spinners" name="tempo" step="0.25">
+      t/s
     </div>
   </div>
 </template>
@@ -64,7 +63,7 @@ export default {
   justify-content: flex-end;
 }
 .timebox > * {
-  padding-right: 10px;
+  margin-right: 10px;
 }
 
 .times {

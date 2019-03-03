@@ -219,10 +219,17 @@ a:hover {
 }
 
 #middle {
-  display: flex;
-  flex-direction: row;
+  /* I don't know why, but I can't get flex to work here. */
+  /* Once the canvas needs a vertical scrollbar, it doesn't grow to match. */
+  /* I really don't want to use grid, but it's the only thing I can get to work. */
+  /* display: flex;
+  flex-direction: row; */
+
   flex: 1;
-  width: 100vw;
+  display: grid;
+  grid-template-rows: auto;
+  grid-template-columns: 200px auto;
+
   overflow-y: auto;
   background-image: url("assets/layersbackground.jpg");
   background-attachment: local;

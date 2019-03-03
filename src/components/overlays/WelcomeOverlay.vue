@@ -2,8 +2,9 @@
   <div class="flex flex-row">
     <div class="about section">
       <h1>nbsplayer</h1>
-      <div><small>Note Block Studio as a website.</small></div>
-      <div><small>Note sounds and textures are owned by Mojang.</small></div>
+      <p>It's like Note Block Studio.</p>
+      <p>Note sounds and textures are owned by Mojang.</p>
+      <p><b>Update:</b> Instruments from 19w09a are now supported.</p>
     </div>
 
     <div class="actions section">
@@ -50,6 +51,12 @@ export default {
 <style scoped>
 .section {
   padding: 0 10px;
+  width: 50%;
+}
+
+p {
+  font-size: 13px;
+  margin: 3px 0;
 }
 
 .about {
@@ -61,14 +68,14 @@ export default {
 }
 
 .actions {
-  font-size: smaller;
+  font-size: 13px;
 }
 
 .button {
   width: 250px;
   padding: 10px;
   border-radius: 5px;
-  /* makes the added border not cause any size changes */
+  /* makes the added border on hover not cause any size changes */
   border: 1px solid transparent;
 }
 .button:hover, .button:active {
