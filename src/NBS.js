@@ -380,40 +380,40 @@ Instrument.builtin = [
 
   // IDs of instruments here might not correspond with Note Block Studio as they are not supported yet.
   new Instrument(
-    "Pling",
-    10,
-    require("./assets/instruments/audio/pling.ogg"),
-    require("./assets/instruments/textures/pling.png"),
-  ),
-  new Instrument(
     "Iron Xylophone",
-    11,
+    10,
     require("./assets/instruments/audio/iron_xylophone.ogg"),
     require("./assets/instruments/textures/iron_xylophone.png"),
   ),
   new Instrument(
     "Cow Bell",
-    12,
+    11,
     require("./assets/instruments/audio/cow_bell.ogg"),
     require("./assets/instruments/textures/cow_bell.png"),
   ),
   new Instrument(
     "Didgeridoo",
-    13,
+    12,
     require("./assets/instruments/audio/didgeridoo.ogg"),
     require("./assets/instruments/textures/didgeridoo.png"),
   ),
   new Instrument(
     "Bit",
-    14,
+    13,
     require("./assets/instruments/audio/bit.ogg"),
     require("./assets/instruments/textures/bit.png"),
   ),
   new Instrument(
     "Banjo",
-    15,
+    14,
     require("./assets/instruments/audio/banjo.ogg"),
     require("./assets/instruments/textures/banjo.png"),
+  ),
+  new Instrument(
+    "Pling",
+    15,
+    require("./assets/instruments/audio/pling.ogg"),
+    require("./assets/instruments/textures/pling.png"),
   ),
 ];
 
