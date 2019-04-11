@@ -186,6 +186,15 @@ export default {
         const ctx = canvas.getContext("2d");
         ctx.drawImage(instrument.baseTexture, 0, 0);
 
+        // Fixes the note textures to be less terrible
+        // (darken and add border)
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.strokeStyle = 'black';
+        ctx.lineWidth = 2;
+        ctx.rect(0, 0, canvas.width, canvas.height);
+        ctx.fill();
+        ctx.stroke();
+
         // Draw the key text centered
         ctx.fillStyle = "white";
         ctx.font = "12px sans-serif";
