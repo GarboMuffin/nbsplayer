@@ -3,8 +3,7 @@
     <div class="about section">
       <h1>nbsplayer</h1>
       <p>It's like Note Block Studio.</p>
-      <p>Note sounds and textures are owned by Mojang.</p>
-      <p><b>Update:</b> Instruments from 19w09a are now supported.</p>
+      <p>Note sounds and textures are owned by Mojang. Not approved by or associated with Mojang.</p>
     </div>
 
     <div class="actions section">
