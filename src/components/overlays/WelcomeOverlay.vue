@@ -71,9 +71,9 @@ p {
 }
 
 .button {
-  width: 250px;
   padding: 10px;
   border-radius: 5px;
+  min-width: 200px;
   /* makes the added border on hover not cause any size changes */
   border: 1px solid transparent;
 }
