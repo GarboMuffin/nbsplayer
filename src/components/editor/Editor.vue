@@ -262,6 +262,11 @@ export default {
      * Updates the canvas.
      */
     update(time) {
+      // If we are not visible, then do not bother rendering anything because that's just a waste of CPU cycles.
+      if (this.isHidden()) {
+        return;
+      }
+
       // TODO: getting client rects is sometimes slow, cache it?
       const boundingClientRect = this.canvas.getBoundingClientRect();
       this.canvas.height = boundingClientRect.height;
@@ -285,6 +290,16 @@ export default {
 
       this.canvas.style.cursor = this.cursor;
     },
+
+    /**
+     * Determines if the document is hidden from view.
+     * May potentially return false negatives, but should not return false positives.
+     * @returns {boolean}
+     */
+    isHidden() {
+      // https://stackoverflow.com/a/12537298
+      return !!(document.hidden || document.msHidden || document.webkitHidden || document.mozHidden);
+    }
   },
 }
 </script>
