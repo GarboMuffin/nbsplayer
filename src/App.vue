@@ -67,7 +67,7 @@ export default {
       state,
       previousTime: -1,
       lastPlayedTick: -1,
-      nextFrame: 0,
+      interval: 0,
     };
   },
 
@@ -78,7 +78,7 @@ export default {
       .then(() => {
         this.state.loading = false;
         this.state.showWelcome = true;
-        requestAnimationFrame((time) => this.tick(time));
+        this.interval = setInterval(() => this.tick());
       });
 
     window.onbeforeunload = (e) => {
@@ -91,7 +91,7 @@ export default {
 
   beforeDestroy() {
     // Stop the frame loop if the app is unmounted for whatever reason.
-    cancelAnimationFrame(this.nextFrame);
+    clearInterval(this.interval);
   },
 
   computed: {
@@ -150,10 +150,10 @@ export default {
     },
 
     /**
-     * Global frame loop. Constantly called with requestAnimationFrame()
+     * Global frame loop.
      */
-    tick(time) {
-      this.nextFrame = requestAnimationFrame((time) => this.tick(time));
+    tick() {
+      const time = performance.now();
 
       // Determine the amount of time that has passed, up to 500 ms
       // If the time is above 500 ms then most likely the timer stopped for a bit (tabbed out, or something)
