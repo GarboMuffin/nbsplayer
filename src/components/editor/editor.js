@@ -29,8 +29,7 @@ export class Viewport {
 export class SongEditor {
   /**
    * Formats a note's key as human readable text.
-   * 
-   * Examples results are "A#3" and "F-4"
+   * Example results are "A#3" and "F-4"
    */
   static formatKey(key) {
     const KEY_TEXT = [
