@@ -377,8 +377,6 @@ Instrument.builtin = [
     require("./assets/instruments/textures/xylophone.png"),
     false
   ),
-
-  // IDs of instruments here might not correspond with Note Block Studio as they are not supported yet.
   new Instrument(
     "Iron Xylophone",
     10,
