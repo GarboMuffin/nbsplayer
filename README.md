@@ -1,8 +1,10 @@
-# nbsplayer
+# NBSplayer
 
 [Minecraft Note Block Studio](https://www.stuffbydavid.com/mcnbs) as a website.
 
 nbsplayer is a Vue app using vue-cli. The entry point is src/main.js.
+
+NBSplayer can load your ```bash .nbs ``` Minecraft Note Block Songs, edit them, and save the updated song files back to your PC. songs can (for now - Three new instruments are in the works) only have the default instruments.
 
 ## Project Setup
 
