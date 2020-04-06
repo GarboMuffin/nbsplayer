@@ -1,8 +1,9 @@
 <template>
   <div class="flex flex-row">
     <div class="about section">
-      <h1>nbsplayer</h1>
-      <p>It's like Note Block Studio.</p>
+      <h1>NBSplayer</h1>
+      <p>It's like an online Note Block Studio.</p>
+      <p>Created by <a href="github.com/GarboMuffin">GarboMuffin</a></p>
       <p>Note sounds and textures are owned by Mojang. Not approved by or associated with Mojang.</p>
     </div>
 
