@@ -413,6 +413,24 @@ Instrument.builtin = [
     require("./assets/instruments/audio/pling.ogg"),
     require("./assets/instruments/textures/pling.png"),
   ),
+  new Instrument(
+    "XP Orb",
+    16,
+    require("./assets/instruments/audio/xp_orb.ogg"),
+    require("./assets/instruments/textures/xp_orb.png"),
+  ),
+  new Instrument(
+    "Portal",
+    17,
+    require("./assets/instruments/audio/portal.ogg"),
+    require("./assets/instruments/textures/portal.png"),
+  ),
+  new Instrument(
+    "Firework Blast",
+    18,
+    require("./assets/instruments/audio/firework_blast.ogg"),
+    require("./assets/instruments/textures/firework_blast.png"),
+  ),
 ];
 
 /**
