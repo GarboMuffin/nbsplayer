@@ -416,19 +416,19 @@ Instrument.builtin = [
   new Instrument(
     "XP Orb",
     16,
-    require("./assets/instruments/audio/xp_orb.ogg"),
+    require("./assets/instruments/audio/entity.experience_orb.pickup.ogg"),
     require("./assets/instruments/textures/xp_orb.png"),
   ),
   new Instrument(
     "Portal",
     17,
-    require("./assets/instruments/audio/portal.ogg"),
+    require("./assets/instruments/audio/block.portal.trigger.ogg"),
     require("./assets/instruments/textures/portal.png"),
   ),
   new Instrument(
     "Firework Blast",
     18,
-    require("./assets/instruments/audio/firework_blast.ogg"),
+    require("./assets/instruments/audio/entity.firework.blast_far.ogg"),
     require("./assets/instruments/textures/firework_blast.png"),
   ),
 ];
