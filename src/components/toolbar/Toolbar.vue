@@ -153,7 +153,7 @@ export default {
       const link = document.createElement("a");
       link.href = url;
       // Use the song's given name as the file's name when possible
-      link.download = (this.state.song.name || "song") + ".nbs";
+      link.download = (this.state.song.name || "my-song") + ".nbs";
 
       // Append the link to the DOM temporarily so clicking on it has an effect.
       // Without appending it click() silently does nothing.
